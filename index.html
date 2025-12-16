@@ -116,53 +116,71 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        /* Bottom Control Bar */
-        #bottom-bar {
+        /* Slider Container - Above Bottom Bar */
+        .slider-container {
             position: absolute;
-            bottom: 0;
+            bottom: 80px;
             left: 0;
             right: 0;
             z-index: 10;
+            padding: 24px 20px;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             pointer-events: auto;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        /* Tab Switcher */
-        .tab-switcher {
-            display: flex;
-            padding: 12px 20px 0;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(241, 250, 238, 0.5);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab.active {
-            color: var(--light);
-            border-bottom: 3px solid var(--accent);
-        }
-
-        /* Slider Container */
-        .slider-container {
-            padding: 20px;
             display: none;
         }
 
         .slider-container.active {
             display: block;
+        }
+
+        /* Bottom Control Bar - Fixed Height */
+        #bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            z-index: 11;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        /* Tab Switcher */
+        .tab-switcher {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(241, 250, 238, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab.active {
+            color: var(--light);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
         }
 
         /* Slider */
@@ -481,19 +499,20 @@
             <div id="lock-text">Lock</div>
         </div>
 
+        <!-- Slider Containers - Above Bottom Bar -->
+        <div id="opacity-container" class="slider-container active">
+            <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        
+        <div id="scale-container" class="slider-container">
+            <input type="range" id="scale-slider" min="0.1" max="3" step="0.01" value="1">
+        </div>
+
         <!-- Bottom Control Bar with Tabs -->
         <div id="bottom-bar">
             <div class="tab-switcher">
                 <div class="tab active" onclick="switchTab('opacity')">Opacity</div>
                 <div class="tab" onclick="switchTab('scale')">Scale</div>
-            </div>
-            
-            <div id="opacity-container" class="slider-container active">
-                <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
-            </div>
-            
-            <div id="scale-container" class="slider-container">
-                <input type="range" id="scale-slider" min="0.1" max="3" step="0.01" value="1">
             </div>
         </div>
     </div>
@@ -621,13 +640,22 @@
                 lockBtn.classList.add('active');
                 lockBtn.innerHTML = "🔒";
                 lockText.innerText = "Locked";
-                document.getElementById('bottom-bar').classList.add('hidden');
+                document.getElementById('bottom-bar').style.display = 'none';
+                document.getElementById('opacity-container').style.display = 'none';
+                document.getElementById('scale-container').style.display = 'none';
                 refImage.style.pointerEvents = "none";
             } else {
                 lockBtn.classList.remove('active');
                 lockBtn.innerHTML = "🔓";
                 lockText.innerText = "Lock";
-                document.getElementById('bottom-bar').classList.remove('hidden');
+                document.getElementById('bottom-bar').style.display = 'flex';
+                // Show the active slider container
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab.textContent.toLowerCase().includes('opacity')) {
+                    document.getElementById('opacity-container').style.display = 'block';
+                } else {
+                    document.getElementById('scale-container').style.display = 'block';
+                }
                 refImage.style.pointerEvents = "auto";
             }
         }
