@@ -17,7 +17,7 @@
             --darker: #0A1128;
             --light: #F1FAEE;
             --overlay-bg: rgba(29, 53, 87, 0.95);
-            --glass-bg: rgba(29, 53, 87, 0.85);
+            --glass-bg: rgba(29, 53, 87, 0.9);
         }
         
         * {
@@ -64,83 +64,6 @@
             cursor: grab;
             touch-action: none;
             transform-origin: center center;
-        }
-
-        /* Layer 2: UI Overlay */
-        #ui-layer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10;
-            padding: 24px 20px;
-            box-sizing: border-box;
-            background: linear-gradient(to top, rgba(10, 17, 40, 0.98), transparent);
-            pointer-events: none;
-        }
-
-        /* Re-enable pointer events for actual buttons */
-        .control-group {
-            pointer-events: auto;
-            margin-bottom: 20px;
-            background: var(--glass-bg);
-            padding: 16px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Sliders */
-        input[type=range] {
-            width: 100%;
-            height: 6px;
-            margin: 10px 0;
-            -webkit-appearance: none;
-            appearance: none;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            border-radius: 5px;
-            outline: none;
-        }
-        
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--light);
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            border: 3px solid var(--primary);
-        }
-        
-        input[type=range]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--light);
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            border: 3px solid var(--primary);
-        }
-
-        label {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--light);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        label::before {
-            content: '';
-            width: 4px;
-            height: 16px;
-            background: linear-gradient(to bottom, var(--primary), var(--secondary));
-            border-radius: 2px;
         }
 
         /* Lock Button - Right Side */
@@ -193,6 +116,98 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
+        /* Bottom Control Bar */
+        #bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Tab Switcher */
+        .tab-switcher {
+            display: flex;
+            padding: 12px 20px 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(241, 250, 238, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--light);
+            border-bottom: 3px solid var(--accent);
+        }
+
+        /* Slider Container */
+        .slider-container {
+            padding: 20px;
+            display: none;
+        }
+
+        .slider-container.active {
+            display: block;
+        }
+
+        /* Slider */
+        input[type=range] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type=range]::-webkit-slider-track {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 5px;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            border: 4px solid var(--primary);
+        }
+        
+        input[type=range]::-moz-range-track {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 5px;
+        }
+        
+        input[type=range]::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            border: 4px solid var(--primary);
+        }
+
         /* Welcome Screen */
         .screen {
             position: absolute;
@@ -220,7 +235,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 30px rgba(6, 255, 165, 0.3);
         }
         
         .screen .tagline {
@@ -467,17 +481,19 @@
             <div id="lock-text">Lock</div>
         </div>
 
-        <!-- Bottom Controls -->
-        <div id="ui-layer">
-            <div id="controls-panel">
-                <div class="control-group">
-                    <label>Opacity</label>
-                    <input type="range" id="opacity-slider" min="0" max="1" step="0.1" value="0.5">
-                </div>
-                <div class="control-group">
-                    <label>Scale</label>
-                    <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
-                </div>
+        <!-- Bottom Control Bar with Tabs -->
+        <div id="bottom-bar">
+            <div class="tab-switcher">
+                <div class="tab active" onclick="switchTab('opacity')">Opacity</div>
+                <div class="tab" onclick="switchTab('scale')">Scale</div>
+            </div>
+            
+            <div id="opacity-container" class="slider-container active">
+                <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
+            </div>
+            
+            <div id="scale-container" class="slider-container">
+                <input type="range" id="scale-slider" min="0.1" max="3" step="0.01" value="1">
             </div>
         </div>
     </div>
@@ -497,7 +513,7 @@
                 <div class="step-title-large">Align & Trace</div>
                 <div class="step-desc-large">
                     • Drag the image to position it<br>
-                    • Use sliders to adjust size & opacity<br>
+                    • Switch tabs to adjust opacity or scale<br>
                     • Tap the lock button when ready<br>
                     • Start tracing your masterpiece!
                 </div>
@@ -515,7 +531,6 @@
         const fileInput = document.getElementById('file-input');
         const opacitySlider = document.getElementById('opacity-slider');
         const scaleSlider = document.getElementById('scale-slider');
-        const controlsPanel = document.getElementById('controls-panel');
         const lockBtn = document.getElementById('lock-btn');
         const lockText = document.getElementById('lock-text');
 
@@ -572,6 +587,24 @@
             document.getElementById('app-container').classList.remove('hidden');
         }
 
+        // Tab Switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide slider containers
+            document.getElementById('opacity-container').classList.remove('active');
+            document.getElementById('scale-container').classList.remove('active');
+            
+            if (tabName === 'opacity') {
+                document.getElementById('opacity-container').classList.add('active');
+            } else {
+                document.getElementById('scale-container').classList.add('active');
+            }
+        }
+
         // UI Controls
         opacitySlider.addEventListener('input', (e) => {
             refImage.style.opacity = e.target.value;
@@ -588,13 +621,13 @@
                 lockBtn.classList.add('active');
                 lockBtn.innerHTML = "🔒";
                 lockText.innerText = "Locked";
-                controlsPanel.classList.add('hidden');
+                document.getElementById('bottom-bar').classList.add('hidden');
                 refImage.style.pointerEvents = "none";
             } else {
                 lockBtn.classList.remove('active');
                 lockBtn.innerHTML = "🔓";
                 lockText.innerText = "Lock";
-                controlsPanel.classList.remove('hidden');
+                document.getElementById('bottom-bar').classList.remove('hidden');
                 refImage.style.pointerEvents = "auto";
             }
         }
