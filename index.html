@@ -3,14 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AR Drawing Assistant</title>
+    <title>AssistArt - AR Drawing Assistant</title>
     <style>
-        /* --- CSS: Mobile-First & Minimal --- */
+        /* --- CSS: Mobile-First & Artistic Design --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
         :root {
-            --primary: #ff4757;
-            --dark: #1e272e;
-            --light: #ffffff;
-            --overlay-bg: rgba(0, 0, 0, 0.6);
+            --primary: #E63946;
+            --secondary: #F77F00;
+            --accent: #06FFA5;
+            --purple: #6930C3;
+            --dark: #1D3557;
+            --darker: #0A1128;
+            --light: #F1FAEE;
+            --overlay-bg: rgba(29, 53, 87, 0.95);
+            --glass-bg: rgba(29, 53, 87, 0.85);
+        }
+        
+        * {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body, html {
@@ -18,8 +29,7 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
-            background-color: #000;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
             color: var(--light);
         }
 
@@ -52,7 +62,7 @@
             opacity: 0.5;
             z-index: 2;
             cursor: grab;
-            touch-action: none; /* Critical for custom drag logic */
+            touch-action: none;
             transform-origin: center center;
         }
 
@@ -63,106 +73,402 @@
             left: 0;
             width: 100%;
             z-index: 10;
-            padding: 20px;
+            padding: 24px 20px;
             box-sizing: border-box;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-            pointer-events: none; /* Let touches pass through to image area if not clicking controls */
+            background: linear-gradient(to top, rgba(10, 17, 40, 0.98), transparent);
+            pointer-events: none;
         }
 
         /* Re-enable pointer events for actual buttons */
         .control-group {
             pointer-events: auto;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            background: var(--glass-bg);
+            padding: 16px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* Sliders */
         input[type=range] {
             width: 100%;
-            margin: 5px 0;
+            height: 6px;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--primary);
+        }
+        
+        input[type=range]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--primary);
         }
 
         label {
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        /* Lock Button - Right Side */
+        #lock-button-container {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 11;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #lock-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #lock-btn:active {
+            transform: scale(0.9);
+        }
+
+        #lock-btn.active {
+            background: linear-gradient(135deg, var(--purple), var(--dark));
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 20px rgba(6, 255, 165, 0.5);
+        }
+
+        #lock-text {
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #ccc;
+            color: var(--light);
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        /* Button Bar */
-        .btn-bar {
-            display: flex;
-            gap: 10px;
-            pointer-events: auto;
-        }
-
-        button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--dark);
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        button.primary {
-            background-color: var(--primary);
-        }
-
-        button.active {
-            border: 2px solid var(--primary);
-        }
-
-        /* Instructions Modal */
-        #modal {
+        /* Welcome Screen */
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--dark);
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, var(--purple) 100%);
             z-index: 20;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 30px;
+            padding: 40px 30px;
             box-sizing: border-box;
             text-align: center;
+            overflow-y: auto;
         }
 
-        #modal h1 { margin-bottom: 10px; }
-        #modal p { line-height: 1.6; color: #ccc; margin-bottom: 20px; }
+        .screen h1 { 
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(6, 255, 165, 0.3);
+        }
         
-        .hidden { display: none !important; }
+        .screen .tagline {
+            font-size: 14px;
+            color: var(--accent);
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        /* Single Step Display */
+        .step-display {
+            max-width: 400px;
+            margin-bottom: 30px;
+        }
+
+        .current-step {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-number-large {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            text-align: center;
+            line-height: 48px;
+            font-weight: 700;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .step-title-large {
+            font-weight: 700;
+            font-size: 24px;
+            color: var(--light);
+            margin-bottom: 12px;
+        }
+
+        .step-desc-large {
+            font-size: 15px;
+            color: rgba(241, 250, 238, 0.8);
+            line-height: 1.8;
+        }
+
+        /* Progress Indicator */
+        .progress-dots {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            width: 32px;
+            border-radius: 6px;
+        }
+
+        /* Buttons */
+        .primary-btn {
+            padding: 18px 48px;
+            font-size: 18px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            box-shadow: 0 8px 24px rgba(105, 48, 195, 0.5);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .primary-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Upload Screen Specific */
+        #upload-area {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+        }
+
+        #upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(29, 53, 87, 0.95);
+        }
+
+        #upload-area .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        #upload-area .upload-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        #upload-area .upload-subtext {
+            font-size: 14px;
+            color: rgba(241, 250, 238, 0.6);
+            margin-top: 8px;
+        }
+
+        .hidden { 
+            display: none !important; 
+        }
 
         /* Hidden file input */
-        #file-input { display: none; }
+        #file-input { 
+            display: none; 
+        }
 
     </style>
 </head>
 <body>
 
-    <div id="modal">
-        <h1>AR Draw Assist</h1>
-        <p>
-            1. Secure your phone on a stand facing down.<br>
-            2. Upload a reference image.<br>
-            3. Align the ghost image with your paper.<br>
-            4. Lock the screen and trace!
-        </p>
-        <button class="primary" onclick="startApp()">Start Camera</button>
+    <!-- Step 1: Welcome Screen -->
+    <div id="welcome-screen" class="screen">
+        <h1>AssistArt</h1>
+        <p class="tagline">AR Drawing Assistant</p>
+        
+        <div class="progress-dots">
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+        </div>
+
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">1</div>
+                <div class="step-title-large">Setup Your Phone</div>
+                <div class="step-desc-large">Secure your device on a stand or holder, facing downward toward your drawing surface</div>
+            </div>
+        </div>
+        
+        <button class="primary-btn" onclick="goToStep2()">📷 Enable Camera</button>
     </div>
 
-    <div id="app-container">
+    <!-- Step 2: Camera Permission -->
+    <div id="camera-screen" class="screen hidden">
+        <h1>AssistArt</h1>
+        <p class="tagline">AR Drawing Assistant</p>
+        
+        <div class="progress-dots">
+            <div class="progress-dot"></div>
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+        </div>
+
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">2</div>
+                <div class="step-title-large">Camera Access</div>
+                <div class="step-desc-large">We need your camera permission to overlay the reference image on your drawing surface</div>
+            </div>
+        </div>
+        
+        <button class="primary-btn" onclick="enableCamera()">✓ Allow Camera</button>
+    </div>
+
+    <!-- Step 3: Upload Image -->
+    <div id="upload-screen" class="screen hidden">
+        <h1>AssistArt</h1>
+        <p class="tagline">AR Drawing Assistant</p>
+        
+        <div class="progress-dots">
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+        </div>
+
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">3</div>
+                <div class="step-title-large">Upload Reference</div>
+                <div class="step-desc-large">Choose the image you want to trace from your gallery</div>
+            </div>
+        </div>
+
+        <div id="upload-area" onclick="document.getElementById('file-input').click()">
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text">Tap to Upload Image</div>
+            <div class="upload-subtext">JPG, PNG, or any image format</div>
+        </div>
+        
+        <input type="file" id="file-input" accept="image/*">
+    </div>
+
+    <!-- Step 4: AR View -->
+    <div id="app-container" class="hidden">
         <video id="camera-feed" autoplay playsinline></video>
         
         <img id="reference-image" src="" alt="Reference" class="hidden">
 
+        <!-- Lock Button - Right Side -->
+        <div id="lock-button-container">
+            <button id="lock-btn" onclick="toggleLock()">🔓</button>
+            <div id="lock-text">Lock</div>
+        </div>
+
+        <!-- Bottom Controls -->
         <div id="ui-layer">
-            
             <div id="controls-panel">
                 <div class="control-group">
                     <label>Opacity</label>
@@ -173,14 +479,32 @@
                     <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
                 </div>
             </div>
-
-            <div class="btn-bar">
-                <button onclick="document.getElementById('file-input').click()">📁 Image</button>
-                <button id="lock-btn" onclick="toggleLock()">🔒 Lock</button>
-            </div>
-            
-            <input type="file" id="file-input" accept="image/*">
         </div>
+    </div>
+
+    <!-- Step 4 Instructions Overlay -->
+    <div id="final-instruction" class="screen hidden">
+        <div class="progress-dots">
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot active"></div>
+        </div>
+
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">4</div>
+                <div class="step-title-large">Align & Trace</div>
+                <div class="step-desc-large">
+                    • Drag the image to position it<br>
+                    • Use sliders to adjust size & opacity<br>
+                    • Tap the lock button when ready<br>
+                    • Start tracing your masterpiece!
+                </div>
+            </div>
+        </div>
+        
+        <button class="primary-btn" onclick="startTracing()">🎨 Start Creating</button>
     </div>
 
     <script>
@@ -193,38 +517,38 @@
         const scaleSlider = document.getElementById('scale-slider');
         const controlsPanel = document.getElementById('controls-panel');
         const lockBtn = document.getElementById('lock-btn');
-        const modal = document.getElementById('modal');
+        const lockText = document.getElementById('lock-text');
 
         let isLocked = false;
-        
-        // Transform State
         let currentScale = 1;
         let posX = 0, posY = 0;
-        
-        // Touch State
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
 
-        // 1. Initialize Camera
-        async function startApp() {
+        // Step Navigation
+        function goToStep2() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('camera-screen').classList.remove('hidden');
+        }
+
+        async function enableCamera() {
             try {
-                // Request rear camera specifically
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: { exact: "environment" } } 
                 }).catch(() => {
-                    // Fallback if "environment" not found
                     return navigator.mediaDevices.getUserMedia({ video: true });
                 });
                 
                 video.srcObject = stream;
-                modal.classList.add('hidden');
+                document.getElementById('camera-screen').classList.add('hidden');
+                document.getElementById('upload-screen').classList.remove('hidden');
             } catch (err) {
-                alert("Camera access denied or not available. Please allow camera permissions.");
+                alert("Camera access denied. Please allow camera permissions and try again.");
                 console.error(err);
             }
         }
 
-        // 2. Handle Image Upload
+        // Handle Image Upload
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -232,15 +556,23 @@
                 reader.onload = (e) => {
                     refImage.src = e.target.result;
                     refImage.classList.remove('hidden');
-                    // Reset positions
                     posX = 0; posY = 0;
                     updateTransform();
+                    
+                    // Show final instruction
+                    document.getElementById('upload-screen').classList.add('hidden');
+                    document.getElementById('final-instruction').classList.remove('hidden');
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        // 3. UI Controls
+        function startTracing() {
+            document.getElementById('final-instruction').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+        }
+
+        // UI Controls
         opacitySlider.addEventListener('input', (e) => {
             refImage.style.opacity = e.target.value;
         });
@@ -254,18 +586,20 @@
             isLocked = !isLocked;
             if (isLocked) {
                 lockBtn.classList.add('active');
-                lockBtn.innerText = "🔓 Unlock";
-                controlsPanel.classList.add('hidden'); // Hide sliders to clear view
-                refImage.style.pointerEvents = "none"; // Disable drag
+                lockBtn.innerHTML = "🔒";
+                lockText.innerText = "Locked";
+                controlsPanel.classList.add('hidden');
+                refImage.style.pointerEvents = "none";
             } else {
                 lockBtn.classList.remove('active');
-                lockBtn.innerText = "🔒 Lock";
+                lockBtn.innerHTML = "🔓";
+                lockText.innerText = "Lock";
                 controlsPanel.classList.remove('hidden');
-                refImage.style.pointerEvents = "auto"; // Enable drag
+                refImage.style.pointerEvents = "auto";
             }
         }
 
-        // 4. Touch Drag Logic (Simple implementation)
+        // Touch Drag Logic
         refImage.addEventListener('touchstart', (e) => {
             if (isLocked) return;
             isDragging = true;
@@ -277,7 +611,7 @@
 
         refImage.addEventListener('touchmove', (e) => {
             if (!isDragging || isLocked) return;
-            e.preventDefault(); // Prevent scrolling the page
+            e.preventDefault();
             
             const currentX = e.touches[0].clientX;
             const currentY = e.touches[0].clientY;
@@ -296,7 +630,6 @@
         });
 
         function updateTransform() {
-            // Apply translation and scale
             refImage.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
         }
     </script>
