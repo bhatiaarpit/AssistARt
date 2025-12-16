@@ -66,9 +66,87 @@
             transform-origin: center center;
         }
 
+        /* Opacity Slider - Left Side Vertical */
+        #opacity-slider-container {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+            transition: opacity 0.3s ease;
+        }
+
+        #opacity-slider-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .slider-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--light);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .vertical-slider-wrapper {
+            height: 200px;
+            width: 48px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type=range].vertical {
+            -webkit-appearance: slider-vertical;
+            appearance: slider-vertical;
+            width: 8px;
+            height: 180px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 5px;
+            outline: none;
+            margin: 0;
+            writing-mode: bt-lr;
+        }
+        
+        input[type=range].vertical::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            border: 4px solid var(--primary);
+        }
+        
+        input[type=range].vertical::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            border: 4px solid var(--primary);
+        }
+
         /* Lock Button - Right Side */
         #lock-button-container {
-            position: absolute;
+            position: fixed;
             right: 20px;
             top: 50%;
             transform: translateY(-50%);
@@ -114,109 +192,6 @@
             color: var(--light);
             text-align: center;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Slider Container - Above Bottom Bar */
-        .slider-container {
-            position: fixed;
-            bottom: 80px;
-            left: 0;
-            right: 0;
-            z-index: 10;
-            padding: 24px 20px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: auto;
-            display: none;
-            box-sizing: border-box;
-        }
-
-        .slider-container.active {
-            display: block !important;
-        }
-
-        /* Bottom Control Bar - Fixed Height */
-        #bottom-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            z-index: 11;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 20px;
-            box-sizing: border-box;
-        }
-
-        /* Tab Switcher */
-        .tab-switcher {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 16px 24px;
-            text-align: center;
-            font-size: 15px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(241, 250, 238, 0.5);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .tab.active {
-            color: var(--light);
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
-        }
-
-        /* Slider */
-        input[type=range] {
-            width: 100%;
-            height: 8px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            border-radius: 5px;
-            outline: none;
-            margin: 0;
-        }
-        
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--light);
-            cursor: pointer;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-            border: 4px solid var(--primary);
-        }
-        
-        input[type=range]::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--light);
-            cursor: pointer;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-            border: 4px solid var(--primary);
-            border: none;
         }
 
         /* Welcome Screen */
@@ -486,27 +461,18 @@
         
         <img id="reference-image" src="" alt="Reference" class="hidden">
 
+        <!-- Opacity Slider - Left Side -->
+        <div id="opacity-slider-container">
+            <div class="slider-label">Opacity</div>
+            <div class="vertical-slider-wrapper">
+                <input type="range" id="opacity-slider" class="vertical" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+            </div>
+        </div>
+
         <!-- Lock Button - Right Side -->
         <div id="lock-button-container">
             <button id="lock-btn" onclick="toggleLock()">🔓</button>
             <div id="lock-text">Lock</div>
-        </div>
-
-        <!-- Slider Containers - Above Bottom Bar -->
-        <div id="opacity-container" class="slider-container active">
-            <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
-        </div>
-        
-        <div id="scale-container" class="slider-container">
-            <input type="range" id="scale-slider" min="0.1" max="3" step="0.01" value="1">
-        </div>
-
-        <!-- Bottom Control Bar with Tabs -->
-        <div id="bottom-bar">
-            <div class="tab-switcher">
-                <div class="tab active" onclick="switchTab('opacity')">Opacity</div>
-                <div class="tab" onclick="switchTab('scale')">Scale</div>
-            </div>
         </div>
     </div>
 
@@ -525,8 +491,9 @@
                 <div class="step-title-large">Align & Trace</div>
                 <div class="step-desc-large">
                     • Drag the image to position it<br>
-                    • Switch tabs to adjust opacity or scale<br>
-                    • Tap the lock button when ready<br>
+                    • Pinch with 2 fingers to zoom in/out<br>
+                    • Use left slider to adjust opacity<br>
+                    • Tap lock button when ready<br>
                     • Start tracing your masterpiece!
                 </div>
             </div>
@@ -542,15 +509,21 @@
         const refImage = document.getElementById('reference-image');
         const fileInput = document.getElementById('file-input');
         const opacitySlider = document.getElementById('opacity-slider');
-        const scaleSlider = document.getElementById('scale-slider');
+        const opacityContainer = document.getElementById('opacity-slider-container');
         const lockBtn = document.getElementById('lock-btn');
         const lockText = document.getElementById('lock-text');
 
         let isLocked = false;
         let currentScale = 1;
         let posX = 0, posY = 0;
+        
+        // Touch State for dragging
         let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
+        let dragStartX, dragStartY, initialLeft, initialTop;
+        
+        // Pinch Zoom State
+        let initialPinchDistance = 0;
+        let initialScale = 1;
 
         // Step Navigation
         function goToStep2() {
@@ -584,9 +557,9 @@
                     refImage.src = e.target.result;
                     refImage.classList.remove('hidden');
                     posX = 0; posY = 0;
+                    currentScale = 1;
                     updateTransform();
                     
-                    // Show final instruction
                     document.getElementById('upload-screen').classList.add('hidden');
                     document.getElementById('final-instruction').classList.remove('hidden');
                 };
@@ -599,101 +572,92 @@
             document.getElementById('app-container').classList.remove('hidden');
         }
 
-        // Tab Switching
-        function switchTab(tabName) {
-            // Update tab buttons
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            // Find and activate the clicked tab
-            tabs.forEach(tab => {
-                if (tab.textContent.toLowerCase().includes(tabName)) {
-                    tab.classList.add('active');
-                }
-            });
-            
-            // Show/hide slider containers
-            const opacityContainer = document.getElementById('opacity-container');
-            const scaleContainer = document.getElementById('scale-container');
-            
-            opacityContainer.classList.remove('active');
-            scaleContainer.classList.remove('active');
-            
-            if (tabName === 'opacity') {
-                opacityContainer.classList.add('active');
-            } else {
-                scaleContainer.classList.add('active');
-            }
-        }
-
-        // UI Controls
+        // Opacity Control
         opacitySlider.addEventListener('input', (e) => {
             refImage.style.opacity = e.target.value;
         });
 
-        scaleSlider.addEventListener('input', (e) => {
-            currentScale = parseFloat(e.target.value);
-            updateTransform();
-        });
-
+        // Lock Toggle
         function toggleLock() {
             isLocked = !isLocked;
-            const bottomBar = document.getElementById('bottom-bar');
-            const opacityContainer = document.getElementById('opacity-container');
-            const scaleContainer = document.getElementById('scale-container');
-            
             if (isLocked) {
                 lockBtn.classList.add('active');
                 lockBtn.innerHTML = "🔒";
                 lockText.innerText = "Locked";
-                bottomBar.style.display = 'none';
-                opacityContainer.classList.remove('active');
-                scaleContainer.classList.remove('active');
+                opacityContainer.classList.add('hidden');
                 refImage.style.pointerEvents = "none";
             } else {
                 lockBtn.classList.remove('active');
                 lockBtn.innerHTML = "🔓";
                 lockText.innerText = "Lock";
-                bottomBar.style.display = 'flex';
-                // Show the active slider based on active tab
-                const activeTab = document.querySelector('.tab.active');
-                if (activeTab && activeTab.textContent.toLowerCase().includes('opacity')) {
-                    opacityContainer.classList.add('active');
-                } else {
-                    scaleContainer.classList.add('active');
-                }
+                opacityContainer.classList.remove('hidden');
                 refImage.style.pointerEvents = "auto";
             }
         }
 
-        // Touch Drag Logic
+        // Get distance between two touch points
+        function getDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Touch Events for Drag and Pinch Zoom
         refImage.addEventListener('touchstart', (e) => {
             if (isLocked) return;
-            isDragging = true;
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            initialLeft = posX;
-            initialTop = posY;
+            
+            if (e.touches.length === 1) {
+                // Single touch - start dragging
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                initialLeft = posX;
+                initialTop = posY;
+            } else if (e.touches.length === 2) {
+                // Two touches - start pinch zoom
+                isDragging = false;
+                initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+                initialScale = currentScale;
+            }
         });
 
         refImage.addEventListener('touchmove', (e) => {
-            if (!isDragging || isLocked) return;
+            if (isLocked) return;
             e.preventDefault();
             
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            
-            const deltaX = currentX - startX;
-            const deltaY = currentY - startY;
+            if (e.touches.length === 1 && isDragging) {
+                // Single touch - drag
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                
+                const deltaX = currentX - dragStartX;
+                const deltaY = currentY - dragStartY;
 
-            posX = initialLeft + deltaX;
-            posY = initialTop + deltaY;
+                posX = initialLeft + deltaX;
+                posY = initialTop + deltaY;
 
-            updateTransform();
+                updateTransform();
+            } else if (e.touches.length === 2) {
+                // Two touches - pinch zoom
+                const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                const scaleChange = currentDistance / initialPinchDistance;
+                currentScale = Math.max(0.1, Math.min(5, initialScale * scaleChange));
+                
+                updateTransform();
+            }
         });
 
-        refImage.addEventListener('touchend', () => {
-            isDragging = false;
+        refImage.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                isDragging = false;
+            } else if (e.touches.length === 1) {
+                // One finger left, restart dragging
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                initialLeft = posX;
+                initialTop = posY;
+            }
         });
 
         function updateTransform() {
