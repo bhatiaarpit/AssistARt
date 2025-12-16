@@ -69,28 +69,41 @@
         /* Opacity Slider - Left Side Vertical */
         #opacity-slider-container {
             position: fixed;
-            left: 20px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             pointer-events: auto;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            animation: slideInLeft 0.5s ease;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
         }
 
         #opacity-slider-container.hidden {
             opacity: 0;
             pointer-events: none;
+            transform: translateY(-50%) translateX(-30px);
         }
 
         .slider-label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             color: var(--light);
             writing-mode: vertical-rl;
             text-orientation: mixed;
@@ -98,56 +111,123 @@
         }
 
         .vertical-slider-wrapper {
-            height: 200px;
-            width: 48px;
+            height: 160px;
+            width: 40px;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
-            border-radius: 24px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vertical-slider-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(to top, 
+                rgba(230, 57, 70, 0.1), 
+                rgba(247, 127, 0, 0.1));
+            pointer-events: none;
         }
 
         input[type=range].vertical {
             -webkit-appearance: slider-vertical;
             appearance: slider-vertical;
-            width: 8px;
-            height: 180px;
+            width: 6px;
+            height: 140px;
             background: linear-gradient(to top, var(--primary), var(--secondary));
             border-radius: 5px;
             outline: none;
             margin: 0;
             writing-mode: bt-lr;
+            position: relative;
+            z-index: 1;
         }
         
         input[type=range].vertical::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             background: var(--light);
             cursor: pointer;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-            border: 4px solid var(--primary);
+            border: 3px solid var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        input[type=range].vertical::-webkit-slider-thumb:active {
+            transform: scale(1.15);
         }
         
         input[type=range].vertical::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             background: var(--light);
             cursor: pointer;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-            border: 4px solid var(--primary);
+            border: 3px solid var(--primary);
         }
 
-        /* Lock Button - Right Side */
+        /* Upload Button on Camera View */
+        #upload-button-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 11;
+            pointer-events: auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #upload-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #upload-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--light);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        #upload-btn:active {
+            transform: scale(0.9);
+        }
+
+        #upload-btn:hover {
+            background: rgba(29, 53, 87, 0.95);
+            border-color: var(--accent);
+        }
         #lock-button-container {
             position: fixed;
-            right: 20px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 11;
@@ -155,23 +235,42 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            animation: slideInRight 0.5s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
         }
 
         #lock-btn {
-            width: 64px;
-            height: 64px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #lock-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--light);
+            stroke-width: 2;
+            fill: none;
         }
 
         #lock-btn:active {
@@ -180,12 +279,16 @@
 
         #lock-btn.active {
             background: linear-gradient(135deg, var(--purple), var(--dark));
-            border: 3px solid var(--accent);
+            border: 2px solid var(--accent);
             box-shadow: 0 0 20px rgba(6, 255, 165, 0.5);
         }
 
+        #lock-btn.active svg {
+            stroke: var(--accent);
+        }
+
         #lock-text {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -307,7 +410,6 @@
             border-radius: 6px;
         }
 
-        /* Buttons */
         .primary-btn {
             padding: 18px 48px;
             font-size: 18px;
@@ -321,6 +423,13 @@
             color: white;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .primary-btn svg {
+            stroke: currentColor;
         }
 
         .primary-btn:active {
@@ -351,8 +460,11 @@
         }
 
         #upload-area .upload-icon {
-            font-size: 64px;
             margin-bottom: 20px;
+        }
+
+        #upload-area .upload-icon svg {
+            stroke: var(--accent);
         }
 
         #upload-area .upload-text {
@@ -400,7 +512,13 @@
             </div>
         </div>
         
-        <button class="primary-btn" onclick="goToStep2()">📷 Enable Camera</button>
+        <button class="primary-btn" onclick="goToStep2()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            Enable Camera
+        </button>
     </div>
 
     <!-- Step 2: Camera Permission -->
@@ -423,7 +541,12 @@
             </div>
         </div>
         
-        <button class="primary-btn" onclick="enableCamera()">✓ Allow Camera</button>
+        <button class="primary-btn" onclick="enableCamera()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Allow Camera
+        </button>
     </div>
 
     <!-- Step 3: Upload Image -->
@@ -447,7 +570,13 @@
         </div>
 
         <div id="upload-area" onclick="document.getElementById('file-input').click()">
-            <div class="upload-icon">🖼️</div>
+            <div class="upload-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+            </div>
             <div class="upload-text">Tap to Upload Image</div>
             <div class="upload-subtext">JPG, PNG, or any image format</div>
         </div>
@@ -461,6 +590,17 @@
         
         <img id="reference-image" src="" alt="Reference" class="hidden">
 
+        <!-- Upload Button - Top Right -->
+        <div id="upload-button-container">
+            <button id="upload-btn" onclick="document.getElementById('file-input-2').click()" title="Change Image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </button>
+        </div>
+
         <!-- Opacity Slider - Left Side -->
         <div id="opacity-slider-container">
             <div class="slider-label">Opacity</div>
@@ -471,9 +611,20 @@
 
         <!-- Lock Button - Right Side -->
         <div id="lock-button-container">
-            <button id="lock-btn" onclick="toggleLock()">🔓</button>
+            <button id="lock-btn" onclick="toggleLock()">
+                <svg id="lock-icon-unlocked" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+                <svg id="lock-icon-locked" viewBox="0 0 24 24" style="display: none;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </button>
             <div id="lock-text">Lock</div>
         </div>
+        
+        <input type="file" id="file-input-2" accept="image/*" style="display: none;">
     </div>
 
     <!-- Step 4 Instructions Overlay -->
@@ -499,7 +650,15 @@
             </div>
         </div>
         
-        <button class="primary-btn" onclick="startTracing()">🎨 Start Creating</button>
+        <button class="primary-btn" onclick="startTracing()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            Start Creating
+        </button>
     </div>
 
     <script>
@@ -508,10 +667,13 @@
         const video = document.getElementById('camera-feed');
         const refImage = document.getElementById('reference-image');
         const fileInput = document.getElementById('file-input');
+        const fileInput2 = document.getElementById('file-input-2');
         const opacitySlider = document.getElementById('opacity-slider');
         const opacityContainer = document.getElementById('opacity-slider-container');
         const lockBtn = document.getElementById('lock-btn');
         const lockText = document.getElementById('lock-text');
+        const lockIconUnlocked = document.getElementById('lock-icon-unlocked');
+        const lockIconLocked = document.getElementById('lock-icon-locked');
 
         let isLocked = false;
         let currentScale = 1;
@@ -549,8 +711,7 @@
         }
 
         // Handle Image Upload
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+        function handleImageUpload(file) {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -559,12 +720,23 @@
                     posX = 0; posY = 0;
                     currentScale = 1;
                     updateTransform();
-                    
-                    document.getElementById('upload-screen').classList.add('hidden');
-                    document.getElementById('final-instruction').classList.remove('hidden');
                 };
                 reader.readAsDataURL(file);
             }
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+                document.getElementById('upload-screen').classList.add('hidden');
+                document.getElementById('final-instruction').classList.remove('hidden');
+            }
+        });
+
+        fileInput2.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            handleImageUpload(file);
         });
 
         function startTracing() {
@@ -582,15 +754,19 @@
             isLocked = !isLocked;
             if (isLocked) {
                 lockBtn.classList.add('active');
-                lockBtn.innerHTML = "🔒";
+                lockIconUnlocked.style.display = 'none';
+                lockIconLocked.style.display = 'block';
                 lockText.innerText = "Locked";
                 opacityContainer.classList.add('hidden');
+                document.getElementById('upload-button-container').style.display = 'none';
                 refImage.style.pointerEvents = "none";
             } else {
                 lockBtn.classList.remove('active');
-                lockBtn.innerHTML = "🔓";
+                lockIconUnlocked.style.display = 'block';
+                lockIconLocked.style.display = 'none';
                 lockText.innerText = "Lock";
                 opacityContainer.classList.remove('hidden');
+                document.getElementById('upload-button-container').style.display = 'block';
                 refImage.style.pointerEvents = "auto";
             }
         }
