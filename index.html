@@ -8,18 +8,30 @@
         /* --- CSS: Mobile-First & Artistic Design --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
-        :root {
-            --primary: #E63946;
-            --secondary: #F77F00;
-            --accent: #06FFA5;
-            --purple: #6930C3;
-            --dark: #1D3557;
-            --darker: #0A1128;
-            --light: #F1FAEE;
-            --overlay-bg: rgba(29, 53, 87, 0.95);
-            --glass-bg: rgba(29, 53, 87, 0.9);
-        }
-        
+:root {
+    /* --- THEME: Deep Space Purple & White --- */
+
+    /* 1. Main Brand Color (Electric Violet) */
+    --primary: #8B5CF6;  
+    
+    /* 2. Secondary mapped to Primary/Darker Purple for consistency */
+    --secondary: #7C3AED; 
+    --purple: #8B5CF6;    
+
+    /* 3. Accents are now White (Clean Look) */
+    --accent: #FFFFFF;
+
+    /* 4. Backgrounds (Deep Dark Violet/Black) */
+    --dark: #1E1B4B;      /* Dark Indigo for cards */
+    --darker: #0F0715;    /* Almost Black for background */
+    
+    /* 5. Text (Pure White) */
+    --light: #F8FAFC;
+
+    /* 6. Glassmorphism (See-through Dark) */
+    --overlay-bg: rgba(15, 7, 21, 0.95);
+    --glass-bg: rgba(15, 7, 21, 0.85); 
+}
         * {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
