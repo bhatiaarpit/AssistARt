@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>RING THE BELL</title>
     <style>
-        /* Import a loud, crazy font */
         @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Permanent+Marker&display=swap');
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -18,37 +17,35 @@
 
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
 
-        /* The Center-Heavy UI */
         #ui-layer {
             position: absolute; inset: 0;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 10; pointer-events: none;
-            text-align: center;
+            text-align: center; padding: 20px;
         }
 
         #santa-msg {
             font-family: 'Permanent Marker', cursive;
-            font-size: 15vw;
-            line-height: 0.8;
+            /* Font starts smaller and scales more carefully */
+            font-size: 10vw; 
+            line-height: 1;
             color: #ff0000;
-            text-shadow: 4px 4px 0px #fff, -4px -4px 0px #000;
-            transform: rotate(-5deg);
-            padding: 20px;
-            max-width: 90%;
+            text-shadow: 2px 2px 0px #fff;
+            max-width: 85vw; /* Keeps text inside the screen */
             word-wrap: break-word;
+            transition: transform 0.1s ease-out;
         }
 
         #warning {
-            font-family: 'Creepster', system-ui;
-            font-size: 8vw;
+            font-family: 'Creepster', cursive;
+            font-size: 6vw;
             color: #ffff00;
             position: absolute;
-            bottom: 10%;
+            bottom: 15%;
             opacity: 0;
         }
 
-        /* Full-screen Interaction Zone */
         #overlay {
             position: fixed; inset: 0; background: #000;
             color: gold; display: flex; flex-direction: column;
@@ -57,38 +54,47 @@
             padding: 20px; text-align: center;
         }
 
-        #overlay h1 { font-size: 18vw; margin: 0; line-height: 1; }
-
-        /* Shake Animations for UI */
         .heavy-shake { animation: shake 0.1s infinite; }
         @keyframes shake {
-            0% { transform: translate(5px, 5px) rotate(2deg); }
-            50% { transform: translate(-5px, -8px) rotate(-3deg); }
-            100% { transform: translate(2px, 5px) rotate(0deg); }
+            0% { transform: translate(3px, 3px); }
+            50% { transform: translate(-3px, -5px); }
+            100% { transform: translate(1px, 3px); }
         }
 
         .popup {
-            position: absolute; font-size: 20vw; pointer-events: none;
+            position: absolute; font-size: 15vw; pointer-events: none;
             z-index: 1000; transform: translate(-50%, -50%);
             animation: explode 0.4s ease-out forwards;
         }
 
         @keyframes explode {
             0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-            100% { transform: translate(var(--x), var(--y)) scale(3) rotate(180deg); opacity: 0; }
+            100% { transform: translate(var(--x), var(--y)) scale(2) rotate(180deg); opacity: 0; }
+        }
+
+        /* Final Festive State */
+        .merry {
+            color: #00ff00 !important;
+            text-shadow: 0 0 20px #fff !important;
+            font-size: 15vw !important;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
     </style>
 </head>
 <body>
 
 <div id="overlay">
-    <h1>RING<br>THE<br>BELL</h1>
-    <p style="font-size: 5vw;">TAP. SHOUT. DESTROY.</p>
+    <h1 style="font-size: 15vw;">RING<br>THE<br>BELL</h1>
+    <p>TAP TO DESTROY XMAS</p>
 </div>
 
 <div id="ui-layer">
-    <div id="santa-msg">RING IT</div>
-    <div id="warning">SYSTEM UNSTABLE</div>
+    <div id="santa-msg">READY?</div>
+    <div id="warning">REALITY BREAKING</div>
 </div>
 
 <script type="importmap">
@@ -103,9 +109,9 @@
     let isDead = false;
 
     const phrases = [
-        "LOUDER!", "YES!", "DESTROY!", "CRACK IT!", 
-        "SANTA IS WATCHING", "HE IS MAD", "STOP NOW", 
-        "VOID CALLING", "BYE BYE", "DEATH TO XMAS"
+        "TAP IT!", "GO!", "LOUDER!", "BREAK IT!", 
+        "SANTA'S MAD", "ELF REVOLT", "BELL CRACKING", 
+        "GLITCHING...", "STOP!", "TOO LATE", "MERRY CHRISTMAS!"
     ];
 
     function init() {
@@ -117,18 +123,13 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Huge Centered Bell
         const geo = new THREE.CylinderGeometry(0.8, 2, 2.5, 32);
-        const mat = new THREE.MeshPhongMaterial({ 
-            color: 0xffd700, 
-            shininess: 100,
-            emissive: 0x440000 
-        });
+        const mat = new THREE.MeshPhongMaterial({ color: 0xffd700, shininess: 100, emissive: 0x330000 });
         bell = new THREE.Mesh(geo, mat);
         scene.add(bell);
 
-        scene.add(new THREE.PointLight(0xff0000, 50, 20));
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        scene.add(new THREE.PointLight(0xff0000, 60, 20));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
         window.addEventListener('touchstart', (e) => { e.preventDefault(); ring(); }, {passive:false});
         window.addEventListener('resize', onResize);
@@ -136,11 +137,13 @@
 
     async function initAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const source = audioCtx.createMediaStreamSource(stream);
-        analyzer = audioCtx.createAnalyser();
-        source.connect(analyzer);
-        dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+        if (stream) {
+            const source = audioCtx.createMediaStreamSource(stream);
+            analyzer = audioCtx.createAnalyser();
+            source.connect(analyzer);
+            dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        }
         loopBeat();
     }
 
@@ -148,58 +151,67 @@
         if(isDead) return;
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        osc.type = 'sawtooth';
+        osc.type = chaosLevel > 50 ? 'sawtooth' : 'sine';
         osc.frequency.setValueAtTime(40 + chaosLevel, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.2, audioCtx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
         osc.connect(g).connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-        setTimeout(loopBeat, Math.max(50, 500 - (chaosLevel * 5)));
+        setTimeout(loopBeat, Math.max(60, 400 - (chaosLevel * 4)));
     }
 
     function ring() {
         if(isDead) return;
         chaosLevel++;
         
-        // Push camera back
-        camera.position.z += 0.5;
+        camera.position.z += 0.3;
 
-        // Warp Geometry
+        // Geometry Shredding
         const pos = bell.geometry.attributes.position;
         for(let i=0; i<pos.count; i++) {
             pos.setXYZ(i, 
-                pos.getX(i) + (Math.random()-0.5) * (chaosLevel * 0.03),
-                pos.getY(i) + (Math.random()-0.5) * (chaosLevel * 0.03),
-                pos.getZ(i) + (Math.random()-0.5) * (chaosLevel * 0.03)
+                pos.getX(i) + (Math.random()-0.5) * (chaosLevel * 0.04),
+                pos.getY(i) + (Math.random()-0.5) * (chaosLevel * 0.04),
+                pos.getZ(i) + (Math.random()-0.5) * (chaosLevel * 0.04)
             );
         }
         pos.needsUpdate = true;
 
-        // Update Centered Text
         const msg = document.getElementById('santa-msg');
-        msg.innerText = phrases[Math.floor(chaosLevel/10)] || "THE END";
-        msg.style.transform = `scale(${1 + (chaosLevel*0.02)}) rotate(${(Math.random()-0.5)*30}deg)`;
         
-        if(chaosLevel > 40) {
+        // Final Wish Logic
+        if(chaosLevel >= 100) {
+            isDead = true;
+            msg.innerText = "MERRY CHRISTMAS!";
+            msg.classList.add('merry');
+            document.body.style.filter = "hue-rotate(120deg) saturate(200%)";
+            document.getElementById('warning').style.opacity = 0;
+            return;
+        }
+
+        msg.innerText = phrases[Math.floor(chaosLevel/10)] || "AHHH!";
+        
+        // Safe Scaling: Text won't go off screen
+        const scaleVal = Math.min(1.5, 1 + (chaosLevel * 0.01));
+        msg.style.transform = `scale(${scaleVal}) rotate(${(Math.random()-0.5)*15}deg)`;
+        
+        if(chaosLevel > 30) {
             document.getElementById('ui-layer').classList.add('heavy-shake');
             document.getElementById('warning').style.opacity = 1;
         }
 
-        // Popups
+        spawnEmoji();
+    }
+
+    function spawnEmoji() {
         const e = document.createElement('div');
         e.className = 'popup';
-        e.innerText = ['🔔','🔥','💀'][Math.floor(Math.random()*3)];
+        e.innerText = ['🔔','❄️','🎁','✨'][Math.floor(Math.random()*4)];
         e.style.left = '50%'; e.style.top = '50%';
-        e.style.setProperty('--x', `${(Math.random()-0.5)*200}vw`);
-        e.style.setProperty('--y', `${(Math.random()-0.5)*200}vh`);
+        e.style.setProperty('--x', `${(Math.random()-0.5)*180}vw`);
+        e.style.setProperty('--y', `${(Math.random()-0.5)*180}vh`);
         document.body.appendChild(e);
         setTimeout(() => e.remove(), 400);
-
-        if(chaosLevel > 100) {
-            isDead = true;
-            document.body.style.filter = "invert(1) saturate(500%)";
-            msg.innerText = "SANTA HAS HAD ENOUGH";
-        }
     }
 
     function animate() {
@@ -208,15 +220,17 @@
         if(analyzer) {
             analyzer.getByteFrequencyData(dataArray);
             vol = dataArray.reduce((a,b)=>a+b)/dataArray.length;
-            if(vol > 50) ring();
+            if(vol > 60) ring();
         }
 
-        const intensity = (chaosLevel * 0.05) + (vol * 0.1);
+        const intensity = (chaosLevel * 0.04) + (vol * 0.1);
         camera.position.z = THREE.MathUtils.lerp(camera.position.z, 5, 0.1);
-        bell.rotation.y += 0.05 + intensity * 0.2;
+        bell.rotation.y += 0.03 + intensity * 0.1;
 
-        const drift = intensity * 5;
-        renderer.domElement.style.filter = `drop-shadow(${drift}px 0 #f00) drop-shadow(-${drift}px 0 #0ff)`;
+        if(!isDead) {
+            const drift = intensity * 3;
+            renderer.domElement.style.filter = `drop-shadow(${drift}px 0 #f00) drop-shadow(-${drift}px 0 #0ff)`;
+        }
         
         renderer.render(scene, camera);
     }
