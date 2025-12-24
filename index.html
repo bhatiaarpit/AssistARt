@@ -298,6 +298,23 @@
         if(isDead) return;
         chaosLevel++;
         
+        // Haptic Feedback - Vibrate Mobile!
+        if (navigator.vibrate) {
+            if(chaosLevel > 90) {
+                // Extreme chaos vibration pattern
+                navigator.vibrate([50, 30, 50, 30, 100]);
+            } else if(chaosLevel > 60) {
+                // Heavy vibration
+                navigator.vibrate([100, 50, 100]);
+            } else if(chaosLevel > 30) {
+                // Medium vibration
+                navigator.vibrate([50, 30, 50]);
+            } else {
+                // Light tap
+                navigator.vibrate(30);
+            }
+        }
+        
         // Activate chaos mode
         if(chaosLevel > 15) {
             document.body.classList.add('chaos-active');
@@ -322,6 +339,12 @@
         // Final Victory
         if(chaosLevel >= 120) {
             isDead = true;
+            
+            // Victory vibration celebration!
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 200, 100, 400]);
+            }
+            
             msg.innerText = "MERRY CHRISTMAS!";
             msg.classList.add('merry');
             document.body.classList.remove('chaos-active');
