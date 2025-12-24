@@ -3,854 +3,345 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AssistArt - AR Drawing Assistant</title>
+    <title>REINDEER DRIFT SIMULATOR 🦌🔥</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Spice&family=Permanent+Marker&display=swap" rel="stylesheet">
     <style>
-        /* --- CSS: Mobile-First & Artistic Design --- */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Permanent Marker', cursive; touch-action: none; user-select: none; }
+        canvas { display: block; }
+
+        /* --- UI OVERLAY --- */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
-:root {
-    /* --- THEME: Deep Space Purple & White --- */
-
-    /* 1. Main Brand Color (Electric Violet) */
-    --primary: #8B5CF6;  
-    
-    /* 2. Secondary mapped to Primary/Darker Purple for consistency */
-    --secondary: #7C3AED; 
-    --purple: #8B5CF6;    
-
-    /* 3. Accents are now White (Clean Look) */
-    --accent: #FFFFFF;
-
-    /* 4. Backgrounds (Deep Dark Violet/Black) */
-    --dark: #1E1B4B;      /* Dark Indigo for cards */
-    --darker: #0F0715;    /* Almost Black for background */
-    
-    /* 5. Text (Pure White) */
-    --light: #F8FAFC;
-
-    /* 6. Glassmorphism (See-through Dark) */
-    --overlay-bg: rgba(15, 7, 21, 0.95);
-    --glass-bg: rgba(15, 7, 21, 0.85); 
-}
-        * {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        /* Intro Screen */
+        #intro-screen { 
+            position: fixed; inset: 0; background: radial-gradient(circle, #ff0000, #4a0000); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 100; pointer-events: all; text-align: center; color: white;
         }
+        #intro-screen h1 { font-family: 'Bungee Spice'; font-size: 3rem; margin: 0; text-shadow: 4px 4px black; }
+        #intro-screen input { padding: 15px; font-size: 1.5rem; border-radius: 10px; border: none; margin: 20px; width: 80%; }
+        #start-btn { padding: 20px 40px; background: #00ff00; color: black; font-size: 2rem; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 0 #008800; }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
-            color: var(--light);
-        }
-
-        /* Container for the AR View */
-        #app-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Layer 0: Camera Feed */
-        #camera-feed {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
-
-        /* Layer 1: Reference Image */
-        #reference-image {
-            position: absolute;
-            max-width: 80%;
-            max-height: 80%;
-            opacity: 0.5;
-            z-index: 2;
-            cursor: grab;
-            touch-action: none;
-            transform-origin: center center;
-        }
-
-        /* Opacity Slider - Left Side Vertical */
-        #opacity-slider-container {
-            position: fixed;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            pointer-events: auto;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            animation: slideInLeft 0.5s ease;
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateY(-50%) translateX(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(-50%) translateX(0);
-            }
-        }
-
-        #opacity-slider-container.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-50%) translateX(-30px);
-        }
-
-        .slider-label {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--light);
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .vertical-slider-wrapper {
-            height: 160px;
-            width: 40px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .vertical-slider-wrapper::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 100%;
-            background: linear-gradient(to top, 
-                rgba(230, 57, 70, 0.1), 
-                rgba(247, 127, 0, 0.1));
-            pointer-events: none;
-        }
-
-        input[type=range].vertical {
-            -webkit-appearance: slider-vertical;
-            appearance: slider-vertical;
-            width: 6px;
-            height: 140px;
-            background: linear-gradient(to top, var(--primary), var(--secondary));
-            border-radius: 5px;
-            outline: none;
-            margin: 0;
-            writing-mode: bt-lr;
-            position: relative;
-            z-index: 1;
-        }
+        /* HUD Elements */
+        .hud { position: absolute; color: #fff; text-shadow: 2px 2px #ff0000; font-family: 'Bungee Spice'; pointer-events: none; transition: transform 0.1s; }
+        #speedo { bottom: 20px; left: 20px; font-size: 2.5rem; }
+        #combo-meter { top: 20px; right: 20px; font-size: 2rem; text-align: right; }
+        #style-bar-container { top: 70px; right: 20px; width: 200px; height: 20px; background: rgba(0,0,0,0.5); border: 3px solid white; }
+        #style-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ffea00, #ff00ff); }
         
-        input[type=range].vertical::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--light);
-            cursor: pointer;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-            border: 3px solid var(--primary);
-            transition: transform 0.2s ease;
+        #callout-container { position: absolute; top: 40%; width: 100%; text-align: center; }
+        .callout { font-size: 3rem; color: #00ffea; animation: pop 0.5s ease-out forwards; position: absolute; width: 100%; left: 0; }
+
+        /* Controls */
+        #turbo-btn { 
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            width: 120px; height: 120px; background: radial-gradient(circle, #fff, #ffea00); 
+            border-radius: 50%; border: 8px solid #ff0000; pointer-events: all; 
+            box-shadow: 0 0 30px #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; text-align: center; line-height: 1; animation: pulse 1s infinite;
         }
 
-        input[type=range].vertical::-webkit-slider-thumb:active {
-            transform: scale(1.15);
-        }
-        
-        input[type=range].vertical::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--light);
-            cursor: pointer;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-            border: 3px solid var(--primary);
+        /* End Screen */
+        #report-screen { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; 
+            flex-direction: column; align-items: center; justify-content: center; z-index: 200; 
+            color: white; padding: 20px; text-align: center;
         }
 
-        /* Upload Button on Camera View */
-        #upload-button-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 11;
-            pointer-events: auto;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        #upload-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        #upload-btn svg {
-            width: 22px;
-            height: 22px;
-            stroke: var(--light);
-            stroke-width: 2;
-            fill: none;
-        }
-
-        #upload-btn:active {
-            transform: scale(0.9);
-        }
-
-        #upload-btn:hover {
-            background: rgba(29, 53, 87, 0.95);
-            border-color: var(--accent);
-        }
-        #lock-button-container {
-            position: fixed;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 11;
-            pointer-events: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            animation: slideInRight 0.5s ease;
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateY(-50%) translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(-50%) translateX(0);
-            }
-        }
-
-        #lock-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        #lock-btn svg {
-            width: 24px;
-            height: 24px;
-            stroke: var(--light);
-            stroke-width: 2;
-            fill: none;
-        }
-
-        #lock-btn:active {
-            transform: scale(0.9);
-        }
-
-        #lock-btn.active {
-            background: linear-gradient(135deg, var(--purple), var(--dark));
-            border: 2px solid var(--accent);
-            box-shadow: 0 0 20px rgba(6, 255, 165, 0.5);
-        }
-
-        #lock-btn.active svg {
-            stroke: var(--accent);
-        }
-
-        #lock-text {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--light);
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Welcome Screen */
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, var(--purple) 100%);
-            z-index: 20;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 30px;
-            box-sizing: border-box;
-            text-align: center;
-            overflow-y: auto;
-        }
-
-        .screen h1 { 
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--accent), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .screen .tagline {
-            font-size: 14px;
-            color: var(--accent);
-            font-weight: 300;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 40px;
-        }
-
-        /* Single Step Display */
-        .step-display {
-            max-width: 400px;
-            margin-bottom: 30px;
-        }
-
-        .current-step {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            text-align: center;
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .step-number-large {
-            display: inline-block;
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            text-align: center;
-            line-height: 48px;
-            font-weight: 700;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
-            margin-bottom: 20px;
-        }
-
-        .step-title-large {
-            font-weight: 700;
-            font-size: 24px;
-            color: var(--light);
-            margin-bottom: 12px;
-        }
-
-        .step-desc-large {
-            font-size: 15px;
-            color: rgba(241, 250, 238, 0.8);
-            line-height: 1.8;
-        }
-
-        /* Progress Indicator */
-        .progress-dots {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .progress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .progress-dot.active {
-            background: linear-gradient(135deg, var(--accent), var(--secondary));
-            width: 32px;
-            border-radius: 6px;
-        }
-
-        .primary-btn {
-            padding: 18px 48px;
-            font-size: 18px;
-            border-radius: 50px;
-            background: linear-gradient(135deg, var(--accent), var(--purple));
-            box-shadow: 0 8px 24px rgba(105, 48, 195, 0.5);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .primary-btn svg {
-            stroke: currentColor;
-        }
-
-        .primary-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Upload Screen Specific */
-        #upload-area {
-            width: 100%;
-            max-width: 400px;
-            height: 300px;
-            border: 3px dashed rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-        }
-
-        #upload-area:hover {
-            border-color: var(--accent);
-            background: rgba(29, 53, 87, 0.95);
-        }
-
-        #upload-area .upload-icon {
-            margin-bottom: 20px;
-        }
-
-        #upload-area .upload-icon svg {
-            stroke: var(--accent);
-        }
-
-        #upload-area .upload-text {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--light);
-        }
-
-        #upload-area .upload-subtext {
-            font-size: 14px;
-            color: rgba(241, 250, 238, 0.6);
-            margin-top: 8px;
-        }
-
-        .hidden { 
-            display: none !important; 
-        }
-
-        /* Hidden file input */
-        #file-input { 
-            display: none; 
-        }
-
+        @keyframes pop { 0% { transform: scale(0) rotate(-10deg); opacity: 0; } 100% { transform: scale(1.5) rotate(5deg); opacity: 1; } }
+        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } }
     </style>
 </head>
 <body>
 
-    <!-- Step 1: Welcome Screen -->
-    <div id="welcome-screen" class="screen">
-        <h1>AssistArt</h1>
-        <p class="tagline">AR Drawing Assistant</p>
+<div id="intro-screen">
+    <h1>REINDEER DRIFT<br>SIMULATOR</h1>
+    <input type="text" id="player-name" placeholder="ENTER NAME..." maxlength="12">
+    <button id="start-btn">SEND IT! 🦌</button>
+    <p style="margin-top:20px;">SWIPE UP: GAS | LEFT/RIGHT: STEER<br>TILT PHONE FOR EXTRA CHAOS</p>
+</div>
+
+<div id="ui-layer">
+    <div id="speedo" class="hud">0 KM/H</div>
+    <div id="combo-meter" class="hud">STYLE: 0</div>
+    <div id="style-bar-container"><div id="style-bar"></div></div>
+    <div id="callout-container"></div>
+    <div id="turbo-btn">TURBO<br>JINGLE<br>BOOST</div>
+</div>
+
+<div id="report-screen">
+    <h1 style="color:#ffea00; font-size: 3rem;">DRIFT STYLE REPORT</h1>
+    <h2 id="final-title" style="color:#ff0000;"></h2>
+    <div id="stats" style="font-size: 1.5rem; margin: 20px;"></div>
+    <button onclick="location.reload()" style="padding:15px; background:white; font-family:inherit;">TRY AGAIN</button>
+</div>
+
+<script>
+/** GAME CONSTANTS & STATE **/
+let playerName = "DASHER";
+let speed = 0, rotation = 0, driftAngle = 0;
+let combo = 0, styleScore = 0, totalSpins = 0, maxAngle = 0;
+let isTurbo = false, turboFuel = 100;
+let gameState = 'intro';
+
+// Input tracking
+const inputs = { steering: 0, accel: 0, turbo: false };
+
+/** THREE.JS SETUP **/
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x111133, 0.02);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(5, 10, 5);
+scene.add(light);
+scene.add(new THREE.AmbientLight(0x4040ff, 0.5));
+
+// Icy Ground
+const floorGeo = new THREE.PlaneGeometry(2000, 2000);
+const floorMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, shininess: 100 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+// Grid for movement reference
+const grid = new THREE.GridHelper(2000, 100, 0xffffff, 0x3333ff);
+grid.position.y = 0.05;
+scene.add(grid);
+
+/** THE REINDEER (Low Poly Design) **/
+const deerGroup = new THREE.Group();
+scene.add(deerGroup);
+
+// Body
+const body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 1.8), new THREE.MeshPhongMaterial({color: 0x8B4513}));
+body.position.y = 0.8;
+deerGroup.add(body);
+
+// Head & Antlers
+const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshPhongMaterial({color: 0x8B4513}));
+head.position.set(0, 1.3, 0.8);
+deerGroup.add(head);
+
+const antlerMat = new THREE.MeshPhongMaterial({color: 0xdeb887});
+const antL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.1), antlerMat);
+antL.position.set(0.3, 1.8, 0.8); antL.rotation.z = 0.4;
+deerGroup.add(antL);
+const antR = antL.clone();
+antR.position.x = -0.3; antR.rotation.z = -0.4;
+deerGroup.add(antR);
+
+// Name Tag
+let nameSprite;
+function createNameTag(name) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 256; canvas.height = 64;
+    ctx.fillStyle = 'rgba(255,0,0,0.8)';
+    ctx.fillRect(0,0,256,64);
+    ctx.font = 'bold 40px Arial';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, 128, 45);
+    const tex = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: tex });
+    nameSprite = new THREE.Sprite(spriteMat);
+    nameSprite.position.y = 2.5;
+    nameSprite.scale.set(2, 0.5, 1);
+    deerGroup.add(nameSprite);
+}
+
+/** PARTICLES (Snow & Skids) **/
+const snowCount = 1000;
+const snowGeo = new THREE.BufferGeometry();
+const snowPos = new Float32Array(snowCount * 3);
+for(let i=0; i<snowCount*3; i++) snowPos[i] = (Math.random() - 0.5) * 100;
+snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+const snowPoints = new THREE.Points(snowGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.2}));
+scene.add(snowPoints);
+
+/** CORE LOGIC **/
+const driftLogic = {
+    velocity: new THREE.Vector3(),
+    driftFactor: 0.98, // Extremely slippery
+    update: function(dt) {
+        // Steering
+        const turnSpeed = (0.05 + (speed * 0.02)) * inputs.steering;
+        rotation -= turnSpeed;
+        deerGroup.rotation.y = rotation;
+
+        // Visual Tilt
+        deerGroup.rotation.z = THREE.MathUtils.lerp(deerGroup.rotation.z, inputs.steering * 0.3, 0.1);
+
+        // Acceleration
+        const accel = inputs.accel * (isTurbo ? 0.8 : 0.3);
+        const force = new THREE.Vector3(Math.sin(rotation) * accel, 0, Math.cos(rotation) * accel);
+        this.velocity.add(force);
         
-        <div class="progress-dots">
-            <div class="progress-dot active"></div>
-            <div class="progress-dot"></div>
-            <div class="progress-dot"></div>
-            <div class="progress-dot"></div>
-        </div>
-
-        <div class="step-display">
-            <div class="current-step">
-                <div class="step-number-large">1</div>
-                <div class="step-title-large">Setup Your Phone</div>
-                <div class="step-desc-large">Secure your device on a stand or holder, facing downward toward your drawing surface</div>
-            </div>
-        </div>
+        // Friction
+        this.velocity.multiplyScalar(0.97);
         
-        <button class="primary-btn" onclick="goToStep2()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-            </svg>
-            Enable Camera
-        </button>
-    </div>
+        // Apply Move
+        deerGroup.position.add(this.velocity);
+        speed = this.velocity.length() * 50;
 
-    <!-- Step 2: Camera Permission -->
-    <div id="camera-screen" class="screen hidden">
-        <h1>AssistArt</h1>
-        <p class="tagline">AR Drawing Assistant</p>
+        // Drift Angle (difference between face direction and velocity direction)
+        const moveDir = this.velocity.clone().normalize();
+        const faceDir = new THREE.Vector3(Math.sin(rotation), 0, Math.cos(rotation));
+        driftAngle = moveDir.angleTo(faceDir);
+
+        // Styling
+        if (speed > 5 && driftAngle > 0.4) {
+            combo += dt * 10;
+            if (Math.random() > 0.9) triggerCallout();
+        } else {
+            combo = Math.max(0, combo - dt * 20);
+        }
+    }
+};
+
+/** UI & INTERACTIONS **/
+function triggerCallout() {
+    if (Math.random() > 0.7) {
+        const texts = [`${playerName} IS UNSTABLE`, "JINGLE X"+Math.floor(combo), "SICK ANGLE!", "OH DEER!", "MAX NAUGHTY"];
+        const div = document.createElement('div');
+        div.className = 'callout';
+        div.style.top = Math.random() * 60 + "%";
+        div.innerText = texts[Math.floor(Math.random()*texts.length)];
+        document.getElementById('callout-container').appendChild(div);
+        setTimeout(() => div.remove(), 600);
+    }
+}
+
+// Touch Controls
+let touchStart = {x:0, y:0};
+window.addEventListener('touchstart', e => {
+    touchStart.x = e.touches[0].clientX;
+    touchStart.y = e.touches[0].clientY;
+});
+
+window.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - touchStart.x;
+    const dy = e.touches[0].clientY - touchStart.y;
+    
+    // Steering
+    inputs.steering = THREE.MathUtils.clamp(dx / 50, -1, 1);
+    
+    // Accel/Brake
+    if (dy < -20) inputs.accel = 1;
+    else if (dy > 20) inputs.accel = -0.5;
+    else inputs.accel = 0;
+});
+
+window.addEventListener('touchend', () => {
+    inputs.steering = 0;
+    inputs.accel = 0;
+});
+
+// Turbo Button
+const turboBtn = document.getElementById('turbo-btn');
+turboBtn.addEventListener('touchstart', (e) => { 
+    e.stopPropagation(); 
+    isTurbo = true; 
+    camera.fov = 100; 
+    camera.updateProjectionMatrix();
+});
+turboBtn.addEventListener('touchend', () => { 
+    isTurbo = false; 
+    camera.fov = 75; 
+    camera.updateProjectionMatrix();
+});
+
+// Gyroscope
+window.addEventListener('deviceorientation', (e) => {
+    if (e.gamma) { // Tilt left/right
+        inputs.steering += e.gamma / 30;
+    }
+});
+
+// Start Game
+document.getElementById('start-btn').addEventListener('click', () => {
+    playerName = document.getElementById('player-name').value.toUpperCase() || "DASHER";
+    createNameTag(playerName);
+    document.getElementById('intro-screen').style.display = 'none';
+    gameState = 'playing';
+    
+    // Request DeviceOrientation permission for iOS
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission();
+    }
+});
+
+/** MAIN LOOP **/
+const clock = new THREE.Clock();
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+
+    if (gameState === 'playing') {
+        driftLogic.update(dt);
+
+        // Camera Follow (Exaggerated Lag)
+        const idealOffset = new THREE.Vector3(
+            deerGroup.position.x - Math.sin(rotation) * 8,
+            6,
+            deerGroup.position.z - Math.cos(rotation) * 8
+        );
+        camera.position.lerp(idealOffset, 0.05);
+        camera.lookAt(deerGroup.position);
         
-        <div class="progress-dots">
-            <div class="progress-dot"></div>
-            <div class="progress-dot active"></div>
-            <div class="progress-dot"></div>
-            <div class="progress-dot"></div>
-        </div>
-
-        <div class="step-display">
-            <div class="current-step">
-                <div class="step-number-large">2</div>
-                <div class="step-title-large">Camera Access</div>
-                <div class="step-desc-large">We need your camera permission to overlay the reference image on your drawing surface</div>
-            </div>
-        </div>
-        
-        <button class="primary-btn" onclick="enableCamera()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            Allow Camera
-        </button>
-    </div>
-
-    <!-- Step 3: Upload Image -->
-    <div id="upload-screen" class="screen hidden">
-        <h1>AssistArt</h1>
-        <p class="tagline">AR Drawing Assistant</p>
-        
-        <div class="progress-dots">
-            <div class="progress-dot"></div>
-            <div class="progress-dot"></div>
-            <div class="progress-dot active"></div>
-            <div class="progress-dot"></div>
-        </div>
-
-        <div class="step-display">
-            <div class="current-step">
-                <div class="step-number-large">3</div>
-                <div class="step-title-large">Upload Reference</div>
-                <div class="step-desc-large">Choose the image you want to trace from your gallery</div>
-            </div>
-        </div>
-
-        <div id="upload-area" onclick="document.getElementById('file-input').click()">
-            <div class="upload-icon">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-            </div>
-            <div class="upload-text">Tap to Upload Image</div>
-            <div class="upload-subtext">JPG, PNG, or any image format</div>
-        </div>
-        
-        <input type="file" id="file-input" accept="image/*">
-    </div>
-
-    <!-- Step 4: AR View -->
-    <div id="app-container" class="hidden">
-        <video id="camera-feed" autoplay playsinline></video>
-        
-        <img id="reference-image" src="" alt="Reference" class="hidden">
-
-        <!-- Upload Button - Top Right -->
-        <div id="upload-button-container">
-            <button id="upload-btn" onclick="document.getElementById('file-input-2').click()" title="Change Image">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Opacity Slider - Left Side -->
-        <div id="opacity-slider-container">
-            <div class="slider-label">Opacity</div>
-            <div class="vertical-slider-wrapper">
-                <input type="range" id="opacity-slider" class="vertical" min="0" max="1" step="0.01" value="0.5" orient="vertical">
-            </div>
-        </div>
-
-        <!-- Lock Button - Right Side -->
-        <div id="lock-button-container">
-            <button id="lock-btn" onclick="toggleLock()">
-                <svg id="lock-icon-unlocked" viewBox="0 0 24 24">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-                </svg>
-                <svg id="lock-icon-locked" viewBox="0 0 24 24" style="display: none;">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-            </button>
-            <div id="lock-text">Lock</div>
-        </div>
-        
-        <input type="file" id="file-input-2" accept="image/*" style="display: none;">
-    </div>
-
-    <!-- Step 4 Instructions Overlay -->
-    <div id="final-instruction" class="screen hidden">
-        <div class="progress-dots">
-            <div class="progress-dot"></div>
-            <div class="progress-dot"></div>
-            <div class="progress-dot"></div>
-            <div class="progress-dot active"></div>
-        </div>
-
-        <div class="step-display">
-            <div class="current-step">
-                <div class="step-number-large">4</div>
-                <div class="step-title-large">Align & Trace</div>
-                <div class="step-desc-large">
-                    • Drag the image to position it<br>
-                    • Pinch with 2 fingers to zoom in/out<br>
-                    • Use left slider to adjust opacity<br>
-                    • Tap lock button when ready<br>
-                    • Start tracing your masterpiece!
-                </div>
-            </div>
-        </div>
-        
-        <button class="primary-btn" onclick="startTracing()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-                <path d="M2 2l7.586 7.586"></path>
-                <circle cx="11" cy="11" r="2"></circle>
-            </svg>
-            Start Creating
-        </button>
-    </div>
-
-    <script>
-        /* --- JavaScript Logic --- */
-
-        const video = document.getElementById('camera-feed');
-        const refImage = document.getElementById('reference-image');
-        const fileInput = document.getElementById('file-input');
-        const fileInput2 = document.getElementById('file-input-2');
-        const opacitySlider = document.getElementById('opacity-slider');
-        const opacityContainer = document.getElementById('opacity-slider-container');
-        const lockBtn = document.getElementById('lock-btn');
-        const lockText = document.getElementById('lock-text');
-        const lockIconUnlocked = document.getElementById('lock-icon-unlocked');
-        const lockIconLocked = document.getElementById('lock-icon-locked');
-
-        let isLocked = false;
-        let currentScale = 1;
-        let posX = 0, posY = 0;
-        
-        // Touch State for dragging
-        let isDragging = false;
-        let dragStartX, dragStartY, initialLeft, initialTop;
-        
-        // Pinch Zoom State
-        let initialPinchDistance = 0;
-        let initialScale = 1;
-
-        // Step Navigation
-        function goToStep2() {
-            document.getElementById('welcome-screen').classList.add('hidden');
-            document.getElementById('camera-screen').classList.remove('hidden');
+        // Camera Shake in Turbo
+        if (isTurbo) {
+            camera.position.x += (Math.random()-0.5) * 0.5;
+            camera.position.y += (Math.random()-0.5) * 0.5;
         }
 
-        async function enableCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: { exact: "environment" } } 
-                }).catch(() => {
-                    return navigator.mediaDevices.getUserMedia({ video: true });
-                });
-                
-                video.srcObject = stream;
-                document.getElementById('camera-screen').classList.add('hidden');
-                document.getElementById('upload-screen').classList.remove('hidden');
-            } catch (err) {
-                alert("Camera access denied. Please allow camera permissions and try again.");
-                console.error(err);
-            }
+        // Snow fall
+        snowPoints.position.y -= 0.1;
+        if (snowPoints.position.y < -10) snowPoints.position.y = 10;
+
+        // UI Update
+        document.getElementById('speedo').innerText = Math.floor(speed) + " KM/H";
+        document.getElementById('speedo').style.transform = `scale(${1 + speed/200}) rotate(${Math.sin(Date.now()*0.01)*5}deg)`;
+        
+        document.getElementById('combo-meter').innerText = "STYLE: " + Math.floor(combo);
+        document.getElementById('style-bar').style.width = Math.min(100, combo) + "%";
+        
+        // Randomly show report (for demo simplicity, triggered by high combo loss)
+        if (combo > 500) {
+            showReport();
         }
+    }
 
-        // Handle Image Upload
-        function handleImageUpload(file) {
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    refImage.src = e.target.result;
-                    refImage.classList.remove('hidden');
-                    posX = 0; posY = 0;
-                    currentScale = 1;
-                    updateTransform();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    renderer.render(scene, camera);
+}
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleImageUpload(file);
-                document.getElementById('upload-screen').classList.add('hidden');
-                document.getElementById('final-instruction').classList.remove('hidden');
-            }
-        });
+function showReport() {
+    gameState = 'ended';
+    document.getElementById('report-screen').style.display = 'flex';
+    document.getElementById('final-title').innerText = speed > 100 ? "CERTIFIED NAUGHTY REINDEER" : "MILDLY FESTIVE DRIFTER";
+    document.getElementById('stats').innerHTML = `
+        MAX SPEED: ${Math.floor(speed)} KM/H<br>
+        STYLE POINTS: ${Math.floor(combo * 10)}<br>
+        DRIFT ANGLE: ${Math.floor(driftAngle * 57)}°
+    `;
+}
 
-        fileInput2.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            handleImageUpload(file);
-        });
+animate();
 
-        function startTracing() {
-            document.getElementById('final-instruction').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-        }
-
-        // Opacity Control
-        opacitySlider.addEventListener('input', (e) => {
-            refImage.style.opacity = e.target.value;
-        });
-
-        // Lock Toggle
-        function toggleLock() {
-            isLocked = !isLocked;
-            if (isLocked) {
-                lockBtn.classList.add('active');
-                lockIconUnlocked.style.display = 'none';
-                lockIconLocked.style.display = 'block';
-                lockText.innerText = "Locked";
-                opacityContainer.classList.add('hidden');
-                document.getElementById('upload-button-container').style.display = 'none';
-                refImage.style.pointerEvents = "none";
-            } else {
-                lockBtn.classList.remove('active');
-                lockIconUnlocked.style.display = 'block';
-                lockIconLocked.style.display = 'none';
-                lockText.innerText = "Lock";
-                opacityContainer.classList.remove('hidden');
-                document.getElementById('upload-button-container').style.display = 'block';
-                refImage.style.pointerEvents = "auto";
-            }
-        }
-
-        // Get distance between two touch points
-        function getDistance(touch1, touch2) {
-            const dx = touch1.clientX - touch2.clientX;
-            const dy = touch1.clientY - touch2.clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        // Touch Events for Drag and Pinch Zoom
-        refImage.addEventListener('touchstart', (e) => {
-            if (isLocked) return;
-            
-            if (e.touches.length === 1) {
-                // Single touch - start dragging
-                isDragging = true;
-                dragStartX = e.touches[0].clientX;
-                dragStartY = e.touches[0].clientY;
-                initialLeft = posX;
-                initialTop = posY;
-            } else if (e.touches.length === 2) {
-                // Two touches - start pinch zoom
-                isDragging = false;
-                initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
-                initialScale = currentScale;
-            }
-        });
-
-        refImage.addEventListener('touchmove', (e) => {
-            if (isLocked) return;
-            e.preventDefault();
-            
-            if (e.touches.length === 1 && isDragging) {
-                // Single touch - drag
-                const currentX = e.touches[0].clientX;
-                const currentY = e.touches[0].clientY;
-                
-                const deltaX = currentX - dragStartX;
-                const deltaY = currentY - dragStartY;
-
-                posX = initialLeft + deltaX;
-                posY = initialTop + deltaY;
-
-                updateTransform();
-            } else if (e.touches.length === 2) {
-                // Two touches - pinch zoom
-                const currentDistance = getDistance(e.touches[0], e.touches[1]);
-                const scaleChange = currentDistance / initialPinchDistance;
-                currentScale = Math.max(0.1, Math.min(5, initialScale * scaleChange));
-                
-                updateTransform();
-            }
-        });
-
-        refImage.addEventListener('touchend', (e) => {
-            if (e.touches.length === 0) {
-                isDragging = false;
-            } else if (e.touches.length === 1) {
-                // One finger left, restart dragging
-                isDragging = true;
-                dragStartX = e.touches[0].clientX;
-                dragStartY = e.touches[0].clientY;
-                initialLeft = posX;
-                initialTop = posY;
-            }
-        });
-
-        function updateTransform() {
-            refImage.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
-        }
-    </script>
+// Resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
 </body>
 </html>
