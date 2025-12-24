@@ -3,73 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>RING THE BELL: MOBILE MAYHEM</title>
+    <title>RING THE BELL</title>
     <style>
-        /* Mobile Reset */
+        /* Import a loud, crazy font */
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Permanent+Marker&display=swap');
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { 
+        
+        body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #000; position: fixed;
-            font-family: 'Arial Black', sans-serif;
-            touch-action: none;
+            overflow: hidden; background: #050000; position: fixed;
+            touch-action: none; color: white;
         }
 
-        canvas { display: block; width: 100% !important; height: 100% !important; }
-        
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+
+        /* The Center-Heavy UI */
         #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10; display: flex; flex-direction: column;
-            justify-content: space-between; align-items: center; padding: 40px 20px;
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 10; pointer-events: none;
+            text-align: center;
         }
 
         #santa-msg {
-            color: #fff; font-size: 8vw; text-align: center;
-            text-transform: uppercase; line-height: 0.9;
-            filter: drop-shadow(0 0 10px red);
-            transition: transform 0.05s;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 15vw;
+            line-height: 0.8;
+            color: #ff0000;
+            text-shadow: 4px 4px 0px #fff, -4px -4px 0px #000;
+            transform: rotate(-5deg);
+            padding: 20px;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+
+        #warning {
+            font-family: 'Creepster', system-ui;
+            font-size: 8vw;
+            color: #ffff00;
+            position: absolute;
+            bottom: 10%;
+            opacity: 0;
+        }
+
+        /* Full-screen Interaction Zone */
+        #overlay {
+            position: fixed; inset: 0; background: #000;
+            color: gold; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+            font-family: 'Permanent Marker', cursive;
+            padding: 20px; text-align: center;
+        }
+
+        #overlay h1 { font-size: 18vw; margin: 0; line-height: 1; }
+
+        /* Shake Animations for UI */
+        .heavy-shake { animation: shake 0.1s infinite; }
+        @keyframes shake {
+            0% { transform: translate(5px, 5px) rotate(2deg); }
+            50% { transform: translate(-5px, -8px) rotate(-3deg); }
+            100% { transform: translate(2px, 5px) rotate(0deg); }
         }
 
         .popup {
-            position: absolute; font-size: 15vw; pointer-events: none;
+            position: absolute; font-size: 20vw; pointer-events: none;
             z-index: 1000; transform: translate(-50%, -50%);
-            animation: flyOut 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation: explode 0.4s ease-out forwards;
         }
 
-        @keyframes flyOut {
-            0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
-            100% { transform: translate(var(--x), var(--y)) scale(4) rotate(360deg); opacity: 0; }
-        }
-
-        #overlay {
-            position: fixed; inset: 0; background: radial-gradient(circle, #ff0000, #200);
-            color: white; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100;
-            padding: 30px; text-align: center;
-        }
-
-        #overlay h1 { font-size: 12vw; margin-bottom: 10px; }
-        #overlay p { font-size: 5vw; opacity: 0.8; }
-
-        /* Crisis States */
-        .vibrate { animation: v 0.05s infinite; }
-        @keyframes v {
-            0% { transform: translate(2px, 2px); }
-            50% { transform: translate(-2px, -2px); }
-            100% { transform: translate(2px, -2px); }
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)) scale(3) rotate(180deg); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
 <div id="overlay">
-    <h1>RING IT</h1>
-    <p>TAP OR SCREAM<br>VOLUME UP</p>
+    <h1>RING<br>THE<br>BELL</h1>
+    <p style="font-size: 5vw;">TAP. SHOUT. DESTROY.</p>
 </div>
 
 <div id="ui-layer">
-    <div id="santa-msg"></div>
-    <div id="chaos-meter" style="color: gold; font-size: 4vw;"></div>
+    <div id="santa-msg">RING IT</div>
+    <div id="warning">SYSTEM UNSTABLE</div>
 </div>
 
 <script type="importmap">
@@ -83,9 +102,10 @@
     let chaosLevel = 0;
     let isDead = false;
 
-    const messages = [
-        "HO!", "RING!", "FASTER!", "MORE!", "YES!", "DANGER", "CRACKING", 
-        "MELTING", "SYSTEM FAILURE", "SANTA IS ANGRY", "STOP NOW", "VOID"
+    const phrases = [
+        "LOUDER!", "YES!", "DESTROY!", "CRACK IT!", 
+        "SANTA IS WATCHING", "HE IS MAD", "STOP NOW", 
+        "VOID CALLING", "BYE BYE", "DEATH TO XMAS"
     ];
 
     function init() {
@@ -93,144 +113,111 @@
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 5;
 
-        renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Performance cap
         document.body.appendChild(renderer.domElement);
 
-        // Responsive Bell
-        const size = window.innerWidth < 500 ? 0.8 : 1.2;
-        const geometry = new THREE.CylinderGeometry(0.4 * size, 1.2 * size, 1.8 * size, 24);
-        const material = new THREE.MeshPhongMaterial({ 
+        // Huge Centered Bell
+        const geo = new THREE.CylinderGeometry(0.8, 2, 2.5, 32);
+        const mat = new THREE.MeshPhongMaterial({ 
             color: 0xffd700, 
-            shininess: 80, 
-            emissive: 0x220000,
-            flatShading: true 
+            shininess: 100,
+            emissive: 0x440000 
         });
-        bell = new THREE.Mesh(geometry, material);
+        bell = new THREE.Mesh(geo, mat);
         scene.add(bell);
 
-        scene.add(new THREE.PointLight(0xff0000, 100, 50));
-        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        scene.add(new THREE.PointLight(0xff0000, 50, 20));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-        // Touch handling
-        window.addEventListener('touchstart', (e) => {
-            if(e.touches.length > 1) e.preventDefault(); // Block multi-touch zoom
-            ring();
-        }, { passive: false });
-
+        window.addEventListener('touchstart', (e) => { e.preventDefault(); ring(); }, {passive:false});
         window.addEventListener('resize', onResize);
     }
 
     async function initAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const source = audioCtx.createMediaStreamSource(stream);
-            analyzer = audioCtx.createAnalyser();
-            analyzer.fftSize = 64;
-            source.connect(analyzer);
-            dataArray = new Uint8Array(analyzer.frequencyBinCount);
-        } catch(e) { console.log("Mic access denied"); }
-        playBeat();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioCtx.createMediaStreamSource(stream);
+        analyzer = audioCtx.createAnalyser();
+        source.connect(analyzer);
+        dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        loopBeat();
     }
 
-    function playBeat() {
+    function loopBeat() {
         if(isDead) return;
-        const speed = Math.max(50, 400 - (chaosLevel * 4));
-        
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        
-        osc.type = chaosLevel > 40 ? 'sawtooth' : 'triangle';
-        osc.frequency.setValueAtTime(50 + (chaosLevel), audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1, audioCtx.currentTime + 0.1);
-        
-        g.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(40 + chaosLevel, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
         osc.connect(g).connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-        
-        setTimeout(playBeat, speed);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        setTimeout(loopBeat, Math.max(50, 500 - (chaosLevel * 5)));
     }
 
     function ring() {
-        if (isDead) return;
+        if(isDead) return;
         chaosLevel++;
+        
+        // Push camera back
+        camera.position.z += 0.5;
 
-        // Haptic feedback (if supported)
-        if (navigator.vibrate) navigator.vibrate(20);
-
-        // Physics distortion
-        camera.position.z += 0.4;
+        // Warp Geometry
         const pos = bell.geometry.attributes.position;
         for(let i=0; i<pos.count; i++) {
-            const multi = chaosLevel * 0.015;
             pos.setXYZ(i, 
-                pos.getX(i) + (Math.random()-0.5) * multi,
-                pos.getY(i) + (Math.random()-0.5) * multi,
-                pos.getZ(i) + (Math.random()-0.5) * multi
+                pos.getX(i) + (Math.random()-0.5) * (chaosLevel * 0.03),
+                pos.getY(i) + (Math.random()-0.5) * (chaosLevel * 0.03),
+                pos.getZ(i) + (Math.random()-0.5) * (chaosLevel * 0.03)
             );
         }
         pos.needsUpdate = true;
 
-        // Visual Popups
-        spawnEmoji();
-
-        // UI Logic
+        // Update Centered Text
         const msg = document.getElementById('santa-msg');
-        msg.innerText = messages[Math.floor(chaosLevel/10)] || "THE END";
-        msg.style.transform = `scale(${1 + (chaosLevel*0.01)}) rotate(${(Math.random()-0.5)*20}deg)`;
-
-        if (chaosLevel > 120) {
-            isDead = true;
-            document.body.style.filter = "invert(1) contrast(500%) brightness(1.5)";
-            msg.innerText = "CHRISTMAS IS CANCELLED";
+        msg.innerText = phrases[Math.floor(chaosLevel/10)] || "THE END";
+        msg.style.transform = `scale(${1 + (chaosLevel*0.02)}) rotate(${(Math.random()-0.5)*30}deg)`;
+        
+        if(chaosLevel > 40) {
+            document.getElementById('ui-layer').classList.add('heavy-shake');
+            document.getElementById('warning').style.opacity = 1;
         }
-    }
 
-    function spawnEmoji() {
-        const emojis = ['🔔', '🎄', '🎅', '💥', '🧨', '🤬'];
+        // Popups
         const e = document.createElement('div');
         e.className = 'popup';
-        e.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+        e.innerText = ['🔔','🔥','💀'][Math.floor(Math.random()*3)];
         e.style.left = '50%'; e.style.top = '50%';
-        e.style.setProperty('--x', `${(Math.random()-0.5)*120}vw`);
-        e.style.setProperty('--y', `${(Math.random()-0.5)*120}vh`);
+        e.style.setProperty('--x', `${(Math.random()-0.5)*200}vw`);
+        e.style.setProperty('--y', `${(Math.random()-0.5)*200}vh`);
         document.body.appendChild(e);
-        setTimeout(() => e.remove(), 500);
+        setTimeout(() => e.remove(), 400);
+
+        if(chaosLevel > 100) {
+            isDead = true;
+            document.body.style.filter = "invert(1) saturate(500%)";
+            msg.innerText = "SANTA HAS HAD ENOUGH";
+        }
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        
-        let volume = 0;
-        if (analyzer) {
+        let vol = 0;
+        if(analyzer) {
             analyzer.getByteFrequencyData(dataArray);
-            volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
-            if (volume > 50) ring();
+            vol = dataArray.reduce((a,b)=>a+b)/dataArray.length;
+            if(vol > 50) ring();
         }
 
-        const intensity = (chaosLevel * 0.05) + (volume * 0.1);
-        
-        camera.position.x = (Math.random()-0.5) * intensity * 0.1;
-        camera.position.y = (Math.random()-0.5) * intensity * 0.1;
+        const intensity = (chaosLevel * 0.05) + (vol * 0.1);
         camera.position.z = THREE.MathUtils.lerp(camera.position.z, 5, 0.1);
-        camera.lookAt(0,0,0);
+        bell.rotation.y += 0.05 + intensity * 0.2;
 
-        bell.rotation.y += 0.04 + (intensity * 0.05);
-        bell.rotation.x += (intensity * 0.02);
-
-        // Screen Warp
-        const drift = intensity * 4;
-        renderer.domElement.style.filter = `
-            hue-rotate(${chaosLevel*2}deg) 
-            drop-shadow(${drift}px 0px 0px #f0f) 
-            drop-shadow(${-drift}px 0px 0px #0ff)
-        `;
-
+        const drift = intensity * 5;
+        renderer.domElement.style.filter = `drop-shadow(${drift}px 0 #f00) drop-shadow(-${drift}px 0 #0ff)`;
+        
         renderer.render(scene, camera);
     }
 
@@ -240,11 +227,10 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    document.getElementById('overlay').addEventListener('touchstart', (e) => {
-        e.preventDefault();
+    document.getElementById('overlay').addEventListener('touchstart', () => {
         document.getElementById('overlay').style.display = 'none';
         init();
-        initAudio();
+        initAudio().catch(()=>{});
         animate();
     });
 </script>
