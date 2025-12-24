@@ -283,12 +283,14 @@
         osc.type = chaosLevel > 60 ? 'sawtooth' : chaosLevel > 30 ? 'square' : 'sine';
         osc.frequency.setValueAtTime(35 + (chaosLevel * 1.5), audioCtx.currentTime);
         
-        g.gain.setValueAtTime(0.25, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        // Much louder volume - scales up with chaos
+        const volume = Math.min(0.8, 0.5 + (chaosLevel * 0.005));
+        g.gain.setValueAtTime(volume, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
         
         osc.connect(g).connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.12);
+        osc.stop(audioCtx.currentTime + 0.15);
         
         const tempo = Math.max(50, 450 - (chaosLevel * 4));
         setTimeout(loopBeat, tempo);
