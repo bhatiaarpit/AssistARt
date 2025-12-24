@@ -3,345 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>REINDEER DRIFT SIMULATOR 🦌🔥</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Bungee+Spice&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <title>RING THE BELL</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Permanent Marker', cursive; touch-action: none; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Courier New', Courier, monospace; touch-action: manipulation; }
         canvas { display: block; }
-
-        /* --- UI OVERLAY --- */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
-        /* Intro Screen */
-        #intro-screen { 
-            position: fixed; inset: 0; background: radial-gradient(circle, #ff0000, #4a0000); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            z-index: 100; pointer-events: all; text-align: center; color: white;
-        }
-        #intro-screen h1 { font-family: 'Bungee Spice'; font-size: 3rem; margin: 0; text-shadow: 4px 4px black; }
-        #intro-screen input { padding: 15px; font-size: 1.5rem; border-radius: 10px; border: none; margin: 20px; width: 80%; }
-        #start-btn { padding: 20px 40px; background: #00ff00; color: black; font-size: 2rem; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 0 #008800; }
-
-        /* HUD Elements */
-        .hud { position: absolute; color: #fff; text-shadow: 2px 2px #ff0000; font-family: 'Bungee Spice'; pointer-events: none; transition: transform 0.1s; }
-        #speedo { bottom: 20px; left: 20px; font-size: 2.5rem; }
-        #combo-meter { top: 20px; right: 20px; font-size: 2rem; text-align: right; }
-        #style-bar-container { top: 70px; right: 20px; width: 200px; height: 20px; background: rgba(0,0,0,0.5); border: 3px solid white; }
-        #style-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ffea00, #ff00ff); }
-        
-        #callout-container { position: absolute; top: 40%; width: 100%; text-align: center; }
-        .callout { font-size: 3rem; color: #00ffea; animation: pop 0.5s ease-out forwards; position: absolute; width: 100%; left: 0; }
-
-        /* Controls */
-        #turbo-btn { 
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
-            width: 120px; height: 120px; background: radial-gradient(circle, #fff, #ffea00); 
-            border-radius: 50%; border: 8px solid #ff0000; pointer-events: all; 
-            box-shadow: 0 0 30px #fff; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; text-align: center; line-height: 1; animation: pulse 1s infinite;
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center; padding: 20px;
+            box-sizing: border-box; z-index: 10;
         }
 
-        /* End Screen */
-        #report-screen { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; 
-            flex-direction: column; align-items: center; justify-content: center; z-index: 200; 
-            color: white; padding: 20px; text-align: center;
+        #warning-text {
+            color: #ff0000; font-size: 2rem; font-weight: bold; text-align: center;
+            text-transform: uppercase; opacity: 0; transition: opacity 0.1s;
         }
 
-        @keyframes pop { 0% { transform: scale(0) rotate(-10deg); opacity: 0; } 100% { transform: scale(1.5) rotate(5deg); opacity: 1; } }
-        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } }
+        #santa-msg {
+            color: white; font-size: 1.2rem; background: rgba(0,0,0,0.7);
+            padding: 10px; border-radius: 5px; text-align: center; max-width: 80%;
+        }
+
+        .shake { animation: shake 0.1s infinite; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            50% { transform: translate(-1px, -2px) rotate(-1deg); }
+            100% { transform: translate(1px, -1px) rotate(1deg); }
+        }
+
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: gold; display: flex;
+            justify-content: center; align-items: center; z-index: 100;
+            text-align: center; font-size: 1.5rem; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<div id="intro-screen">
-    <h1>REINDEER DRIFT<br>SIMULATOR</h1>
-    <input type="text" id="player-name" placeholder="ENTER NAME..." maxlength="12">
-    <button id="start-btn">SEND IT! 🦌</button>
-    <p style="margin-top:20px;">SWIPE UP: GAS | LEFT/RIGHT: STEER<br>TILT PHONE FOR EXTRA CHAOS</p>
-</div>
+<div id="overlay"><h1>TAP TO START THE CARNAGE 🔔</h1></div>
 
 <div id="ui-layer">
-    <div id="speedo" class="hud">0 KM/H</div>
-    <div id="combo-meter" class="hud">STYLE: 0</div>
-    <div id="style-bar-container"><div id="style-bar"></div></div>
-    <div id="callout-container"></div>
-    <div id="turbo-btn">TURBO<br>JINGLE<br>BOOST</div>
+    <div id="warning-text">STOP IT</div>
+    <div id="santa-msg">Ho ho ho! Ring the bell, child!</div>
 </div>
 
-<div id="report-screen">
-    <h1 style="color:#ffea00; font-size: 3rem;">DRIFT STYLE REPORT</h1>
-    <h2 id="final-title" style="color:#ff0000;"></h2>
-    <div id="stats" style="font-size: 1.5rem; margin: 20px;"></div>
-    <button onclick="location.reload()" style="padding:15px; background:white; font-family:inherit;">TRY AGAIN</button>
-</div>
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
 
-<script>
-/** GAME CONSTANTS & STATE **/
-let playerName = "DASHER";
-let speed = 0, rotation = 0, driftAngle = 0;
-let combo = 0, styleScore = 0, totalSpins = 0, maxAngle = 0;
-let isTurbo = false, turboFuel = 100;
-let gameState = 'intro';
+<script type="module">
+    import * as THREE from 'three';
 
-// Input tracking
-const inputs = { steering: 0, accel: 0, turbo: false };
+    let scene, camera, renderer, bell, particles, analyzer, dataArray;
+    let chaosLevel = 0;
+    let isExploded = false;
+    const messages = [
+        "Ho ho ho! Ring it!", "That's a nice sound.", "Okay, plenty of joy now.",
+        "STOP RINGING.", "SANTA HAS A HEADACHE.", "MY EARS ARE BLEEDING.",
+        "THE REINDEER ARE BOLTING.", "I'M CANCELLING CHRISTMAS.",
+        "YOU FOOL. YOU'VE BROKEN THE VOID.", "SANTA IS NOT OK.", "ABANDON ALL HOPE."
+    ];
 
-/** THREE.JS SETUP **/
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x111133, 0.02);
+    // Setup
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-document.body.appendChild(renderer.domElement);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
 
-// Lighting
-const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(5, 10, 5);
-scene.add(light);
-scene.add(new THREE.AmbientLight(0x4040ff, 0.5));
+        // Lighting
+        const light = new THREE.PointLight(0xff0000, 10, 100);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040, 2));
 
-// Icy Ground
-const floorGeo = new THREE.PlaneGeometry(2000, 2000);
-const floorMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, shininess: 100 });
-const floor = new THREE.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
+        // The Bell
+        const geometry = new THREE.CylinderGeometry(0.5, 1.5, 2, 32);
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0xffd700, 
+            shininess: 100, 
+            flatShading: false,
+            emissive: 0x221100 
+        });
+        bell = new THREE.Mesh(geometry, material);
+        scene.add(bell);
 
-// Grid for movement reference
-const grid = new THREE.GridHelper(2000, 100, 0xffffff, 0x3333ff);
-grid.position.y = 0.05;
-scene.add(grid);
+        // Particle System (Snow/Shards)
+        const pGeo = new THREE.BufferGeometry();
+        const pCount = 1000;
+        const posArr = new Float32Array(pCount * 3);
+        for(let i=0; i<pCount*3; i++) posArr[i] = (Math.random() - 0.5) * 10;
+        pGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+        const pMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
+        particles = new THREE.Points(pGeo, pMat);
+        scene.add(particles);
 
-/** THE REINDEER (Low Poly Design) **/
-const deerGroup = new THREE.Group();
-scene.add(deerGroup);
+        window.addEventListener('resize', onWindowResize);
+        window.addEventListener('touchstart', (e) => { e.preventDefault(); ring(); }, {passive: false});
+        window.addEventListener('click', ring);
+    }
 
-// Body
-const body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 1.8), new THREE.MeshPhongMaterial({color: 0x8B4513}));
-body.position.y = 0.8;
-deerGroup.add(body);
+    async function initAudio() {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(stream);
+        analyzer = audioCtx.createAnalyser();
+        analyzer.fftSize = 256;
+        source.connect(analyzer);
+        dataArray = new Uint8Array(analyzer.frequencyBinCount);
+    }
 
-// Head & Antlers
-const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshPhongMaterial({color: 0x8B4513}));
-head.position.set(0, 1.3, 0.8);
-deerGroup.add(head);
-
-const antlerMat = new THREE.MeshPhongMaterial({color: 0xdeb887});
-const antL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.1), antlerMat);
-antL.position.set(0.3, 1.8, 0.8); antL.rotation.z = 0.4;
-deerGroup.add(antL);
-const antR = antL.clone();
-antR.position.x = -0.3; antR.rotation.z = -0.4;
-deerGroup.add(antR);
-
-// Name Tag
-let nameSprite;
-function createNameTag(name) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 256; canvas.height = 64;
-    ctx.fillStyle = 'rgba(255,0,0,0.8)';
-    ctx.fillRect(0,0,256,64);
-    ctx.font = 'bold 40px Arial';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.fillText(name, 128, 45);
-    const tex = new THREE.CanvasTexture(canvas);
-    const spriteMat = new THREE.SpriteMaterial({ map: tex });
-    nameSprite = new THREE.Sprite(spriteMat);
-    nameSprite.position.y = 2.5;
-    nameSprite.scale.set(2, 0.5, 1);
-    deerGroup.add(nameSprite);
-}
-
-/** PARTICLES (Snow & Skids) **/
-const snowCount = 1000;
-const snowGeo = new THREE.BufferGeometry();
-const snowPos = new Float32Array(snowCount * 3);
-for(let i=0; i<snowCount*3; i++) snowPos[i] = (Math.random() - 0.5) * 100;
-snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
-const snowPoints = new THREE.Points(snowGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.2}));
-scene.add(snowPoints);
-
-/** CORE LOGIC **/
-const driftLogic = {
-    velocity: new THREE.Vector3(),
-    driftFactor: 0.98, // Extremely slippery
-    update: function(dt) {
-        // Steering
-        const turnSpeed = (0.05 + (speed * 0.02)) * inputs.steering;
-        rotation -= turnSpeed;
-        deerGroup.rotation.y = rotation;
-
-        // Visual Tilt
-        deerGroup.rotation.z = THREE.MathUtils.lerp(deerGroup.rotation.z, inputs.steering * 0.3, 0.1);
-
-        // Acceleration
-        const accel = inputs.accel * (isTurbo ? 0.8 : 0.3);
-        const force = new THREE.Vector3(Math.sin(rotation) * accel, 0, Math.cos(rotation) * accel);
-        this.velocity.add(force);
+    function ring() {
+        if (chaosLevel > 100) return; // Final Freeze
         
-        // Friction
-        this.velocity.multiplyScalar(0.97);
+        chaosLevel += 1;
         
-        // Apply Move
-        deerGroup.position.add(this.velocity);
-        speed = this.velocity.length() * 50;
-
-        // Drift Angle (difference between face direction and velocity direction)
-        const moveDir = this.velocity.clone().normalize();
-        const faceDir = new THREE.Vector3(Math.sin(rotation), 0, Math.cos(rotation));
-        driftAngle = moveDir.angleTo(faceDir);
-
-        // Styling
-        if (speed > 5 && driftAngle > 0.4) {
-            combo += dt * 10;
-            if (Math.random() > 0.9) triggerCallout();
-        } else {
-            combo = Math.max(0, combo - dt * 20);
+        // Visual feedback
+        bell.scale.multiplyScalar(1.05);
+        bell.material.color.setHSL(0.1, 1, 0.5 - (chaosLevel / 200));
+        
+        // Randomize geometry (Glitch effect)
+        const pos = bell.geometry.attributes.position;
+        for(let i=0; i<pos.count; i++) {
+            pos.setZ(i, pos.getZ(i) + (Math.random() - 0.5) * (chaosLevel/50));
         }
+        pos.needsUpdate = true;
+
+        // UI Chaos
+        updateUI();
+
+        // Sound Simulation (Visual only if no audio assets provided)
+        document.body.style.backgroundColor = (chaosLevel % 2 === 0) ? "#300" : "#000";
     }
-};
 
-/** UI & INTERACTIONS **/
-function triggerCallout() {
-    if (Math.random() > 0.7) {
-        const texts = [`${playerName} IS UNSTABLE`, "JINGLE X"+Math.floor(combo), "SICK ANGLE!", "OH DEER!", "MAX NAUGHTY"];
-        const div = document.createElement('div');
-        div.className = 'callout';
-        div.style.top = Math.random() * 60 + "%";
-        div.innerText = texts[Math.floor(Math.random()*texts.length)];
-        document.getElementById('callout-container').appendChild(div);
-        setTimeout(() => div.remove(), 600);
-    }
-}
-
-// Touch Controls
-let touchStart = {x:0, y:0};
-window.addEventListener('touchstart', e => {
-    touchStart.x = e.touches[0].clientX;
-    touchStart.y = e.touches[0].clientY;
-});
-
-window.addEventListener('touchmove', e => {
-    const dx = e.touches[0].clientX - touchStart.x;
-    const dy = e.touches[0].clientY - touchStart.y;
-    
-    // Steering
-    inputs.steering = THREE.MathUtils.clamp(dx / 50, -1, 1);
-    
-    // Accel/Brake
-    if (dy < -20) inputs.accel = 1;
-    else if (dy > 20) inputs.accel = -0.5;
-    else inputs.accel = 0;
-});
-
-window.addEventListener('touchend', () => {
-    inputs.steering = 0;
-    inputs.accel = 0;
-});
-
-// Turbo Button
-const turboBtn = document.getElementById('turbo-btn');
-turboBtn.addEventListener('touchstart', (e) => { 
-    e.stopPropagation(); 
-    isTurbo = true; 
-    camera.fov = 100; 
-    camera.updateProjectionMatrix();
-});
-turboBtn.addEventListener('touchend', () => { 
-    isTurbo = false; 
-    camera.fov = 75; 
-    camera.updateProjectionMatrix();
-});
-
-// Gyroscope
-window.addEventListener('deviceorientation', (e) => {
-    if (e.gamma) { // Tilt left/right
-        inputs.steering += e.gamma / 30;
-    }
-});
-
-// Start Game
-document.getElementById('start-btn').addEventListener('click', () => {
-    playerName = document.getElementById('player-name').value.toUpperCase() || "DASHER";
-    createNameTag(playerName);
-    document.getElementById('intro-screen').style.display = 'none';
-    gameState = 'playing';
-    
-    // Request DeviceOrientation permission for iOS
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission();
-    }
-});
-
-/** MAIN LOOP **/
-const clock = new THREE.Clock();
-function animate() {
-    requestAnimationFrame(animate);
-    const dt = clock.getDelta();
-
-    if (gameState === 'playing') {
-        driftLogic.update(dt);
-
-        // Camera Follow (Exaggerated Lag)
-        const idealOffset = new THREE.Vector3(
-            deerGroup.position.x - Math.sin(rotation) * 8,
-            6,
-            deerGroup.position.z - Math.cos(rotation) * 8
-        );
-        camera.position.lerp(idealOffset, 0.05);
-        camera.lookAt(deerGroup.position);
+    function updateUI() {
+        const msgIndex = Math.min(Math.floor(chaosLevel / 10), messages.length - 1);
+        const msgEl = document.getElementById('santa-msg');
+        const warnEl = document.getElementById('warning-text');
         
-        // Camera Shake in Turbo
-        if (isTurbo) {
-            camera.position.x += (Math.random()-0.5) * 0.5;
-            camera.position.y += (Math.random()-0.5) * 0.5;
-        }
-
-        // Snow fall
-        snowPoints.position.y -= 0.1;
-        if (snowPoints.position.y < -10) snowPoints.position.y = 10;
-
-        // UI Update
-        document.getElementById('speedo').innerText = Math.floor(speed) + " KM/H";
-        document.getElementById('speedo').style.transform = `scale(${1 + speed/200}) rotate(${Math.sin(Date.now()*0.01)*5}deg)`;
+        msgEl.innerText = messages[msgIndex];
+        msgEl.style.transform = `translate(${(Math.random()-0.5)*chaosLevel}px, ${(Math.random()-0.5)*chaosLevel}px)`;
         
-        document.getElementById('combo-meter').innerText = "STYLE: " + Math.floor(combo);
-        document.getElementById('style-bar').style.width = Math.min(100, combo) + "%";
-        
-        // Randomly show report (for demo simplicity, triggered by high combo loss)
-        if (combo > 500) {
-            showReport();
+        if (chaosLevel > 30) {
+            warnEl.style.opacity = 1;
+            warnEl.innerText = chaosLevel > 80 ? "REALITY COLLAPSING" : "STOP RINGING";
+            document.getElementById('ui-layer').classList.add('shake');
         }
     }
 
-    renderer.render(scene, camera);
-}
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        let micBoost = 0;
+        if (analyzer) {
+            analyzer.getByteFrequencyData(dataArray);
+            micBoost = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            if (micBoost > 50) ring(); // Shout to ring
+        }
 
-function showReport() {
-    gameState = 'ended';
-    document.getElementById('report-screen').style.display = 'flex';
-    document.getElementById('final-title').innerText = speed > 100 ? "CERTIFIED NAUGHTY REINDEER" : "MILDLY FESTIVE DRIFTER";
-    document.getElementById('stats').innerHTML = `
-        MAX SPEED: ${Math.floor(speed)} KM/H<br>
-        STYLE POINTS: ${Math.floor(combo * 10)}<br>
-        DRIFT ANGLE: ${Math.floor(driftAngle * 57)}°
-    `;
-}
+        const intensity = (chaosLevel / 100) + (micBoost / 255);
+        
+        // Bell rotation & shake
+        bell.rotation.y += 0.01 + intensity * 0.5;
+        bell.rotation.z = Math.sin(Date.now() * 0.01) * intensity;
+        
+        // Camera instability
+        camera.position.x = Math.sin(Date.now() * 0.05) * intensity;
+        camera.position.y = Math.cos(Date.now() * 0.05) * intensity;
+        camera.zoom = 1 + (Math.sin(Date.now() * 0.1) * intensity * 0.5);
+        camera.updateProjectionMatrix();
 
-animate();
+        // Explosion check
+        if (chaosLevel > 90 && !isExploded) {
+            bell.material.wireframe = true;
+            particles.scale.multiplyScalar(1.1);
+        }
 
-// Resize
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+        if (chaosLevel >= 110) {
+            document.getElementById('santa-msg').innerText = "SANTA HAS HAD ENOUGH.";
+            document.body.style.filter = "invert(1) contrast(200%)";
+            return; // Freeze app
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    document.getElementById('overlay').addEventListener('click', () => {
+        document.getElementById('overlay').style.display = 'none';
+        init();
+        initAudio().catch(() => console.log("Mic blocked"));
+        animate();
+    });
+
 </script>
 </body>
 </html>
