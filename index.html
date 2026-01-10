@@ -1,466 +1,975 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RING THE BELL: CHAOS EDITION</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AssistArt - AR Drawing Assistant</title>
+
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Permanent+Marker&display=swap');
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        /* --- CSS: Mobile-First & Artistic Design --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
-        body, html { 
-            width: 100%; height: 100%; overflow: hidden; 
-            background: #050000; position: fixed;
-            touch-action: none; color: white;
-            font-family: 'Permanent Marker', cursive;
+:root {
+    /* --- THEME: Deep Space Purple & White --- */
+
+    /* 1. Main Brand Color (Electric Violet) */
+    --primary: #8B5CF6;  
+    
+    /* 2. Secondary mapped to Primary/Darker Purple for consistency */
+    --secondary: #7C3AED; 
+    --purple: #8B5CF6;    
+
+    /* 3. Accents are now White (Clean Look) */
+    --accent: #FFFFFF;
+
+    /* 4. Backgrounds (Deep Dark Violet/Black) */
+    --dark: #1E1B4B;      /* Dark Indigo for cards */
+    --darker: #0F0715;    /* Almost Black for background */
+    
+    /* 5. Text (Pure White) */
+    --light: #F8FAFC;
+
+    /* 6. Glassmorphism (See-through Dark) */
+    --overlay-bg: rgba(15, 7, 21, 0.95);
+    --glass-bg: rgba(15, 7, 21, 0.85); 
+}
+        * {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        canvas { display: block; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-
-        #ui-layer {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 10; pointer-events: none;
-            text-align: center; padding: 20px;
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
         }
 
-        #santa-msg {
-            font-family: 'Permanent Marker', cursive;
-            font-size: clamp(28px, 8vw, 56px);
-            line-height: 1.2;
-            color: #ff0000;
-            text-shadow: 
-                4px 4px 0px #fff,
-                -3px -3px 0px #00ff00,
-                0 0 30px rgba(255, 0, 0, 1);
-            max-width: 90vw;
-            word-wrap: break-word;
-            transition: all 0.1s ease-out;
-            letter-spacing: 3px;
-            padding: 15px;
-            text-transform: uppercase;
+        /* Container for the AR View */
+        #app-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        #warning {
-            font-family: 'Creepster', cursive;
-            font-size: clamp(20px, 5vw, 36px);
-            color: #ffff00;
+        /* Layer 0: Camera Feed */
+        #camera-feed {
             position: absolute;
-            bottom: 20%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        /* Layer 1: Reference Image */
+        #reference-image {
+            position: absolute;
+            max-width: 80%;
+            max-height: 80%;
+            opacity: 0.5;
+            z-index: 2;
+            cursor: grab;
+            touch-action: none;
+            transform-origin: center center;
+        }
+
+        /* Opacity Slider - Left Side Vertical */
+        #opacity-slider-container {
+            position: fixed;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            animation: slideInLeft 0.5s ease;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        #opacity-slider-container.hidden {
             opacity: 0;
-            text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000;
-            letter-spacing: 4px;
-            animation: warningPulse 0.5s infinite;
-        }
-
-        @keyframes warningPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        #overlay {
-            position: fixed; inset: 0; 
-            background: radial-gradient(circle at center, #ff0000 0%, #1a0000 40%, #000 100%);
-            color: gold; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100;
-            font-family: 'Permanent Marker', cursive;
-            padding: 30px; text-align: center;
-            cursor: pointer;
-        }
-
-        #overlay h1 {
-            font-size: clamp(40px, 11vw, 72px);
-            margin: 0 0 30px 0;
-            text-shadow: 
-                5px 5px 0 #ff0000,
-                -3px -3px 0 #00ff00,
-                0 0 40px rgba(255, 215, 0, 1);
-            animation: titleGlow 2s ease-in-out infinite;
-            line-height: 1.1;
-        }
-
-        #overlay p {
-            font-size: clamp(18px, 4.5vw, 28px);
-            letter-spacing: 4px;
-            opacity: 0.9;
-            animation: blink 1.2s infinite;
-        }
-
-        @keyframes titleGlow {
-            0%, 100% { 
-                text-shadow: 5px 5px 0 #ff0000, -3px -3px 0 #00ff00, 0 0 40px rgba(255, 215, 0, 0.8);
-                transform: scale(1);
-            }
-            50% { 
-                text-shadow: 5px 5px 0 #00ff00, -3px -3px 0 #ff0000, 0 0 60px rgba(255, 215, 0, 1);
-                transform: scale(1.05);
-            }
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 0.4; }
-        }
-
-        .heavy-shake { animation: shake 0.08s infinite; }
-        @keyframes shake {
-            0% { transform: translate(5px, 5px) rotate(2deg); }
-            25% { transform: translate(-5px, 3px) rotate(-2deg); }
-            50% { transform: translate(-3px, -6px) rotate(3deg); }
-            75% { transform: translate(4px, -4px) rotate(-3deg); }
-            100% { transform: translate(3px, 5px) rotate(2deg); }
-        }
-
-        .popup {
-            position: absolute; 
-            font-size: clamp(50px, 13vw, 90px);
             pointer-events: none;
-            z-index: 1000; 
-            transform: translate(-50%, -50%);
-            animation: explode 0.6s ease-out forwards;
-            filter: drop-shadow(0 0 15px currentColor);
+            transform: translateY(-50%) translateX(-30px);
         }
 
-        @keyframes explode {
-            0% { 
-                transform: translate(-50%, -50%) scale(0.5) rotate(0deg); 
-                opacity: 1; 
+        .slider-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--light);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .vertical-slider-wrapper {
+            height: 160px;
+            width: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vertical-slider-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(to top, 
+                rgba(230, 57, 70, 0.1), 
+                rgba(247, 127, 0, 0.1));
+            pointer-events: none;
+        }
+
+        input[type=range].vertical {
+            -webkit-appearance: slider-vertical;
+            appearance: slider-vertical;
+            width: 6px;
+            height: 140px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 5px;
+            outline: none;
+            margin: 0;
+            writing-mode: bt-lr;
+            position: relative;
+            z-index: 1;
+        }
+
+        input[type=range].vertical::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            border: 3px solid var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        input[type=range].vertical::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+
+        input[type=range].vertical::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--light);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            border: 3px solid var(--primary);
+        }
+
+        /* Upload Button on Camera View */
+        #upload-button-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 11;
+            pointer-events: auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #upload-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #upload-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--light);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        #upload-btn:active {
+            transform: scale(0.9);
+        }
+
+        #upload-btn:hover {
+            background: rgba(29, 53, 87, 0.95);
+            border-color: var(--accent);
+        }
+        #lock-button-container {
+            position: fixed;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 11;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            animation: slideInRight 0.5s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(30px);
             }
-            100% { 
-                transform: translate(var(--x), var(--y)) scale(3) rotate(720deg); 
-                opacity: 0; 
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
             }
         }
 
-        /* Final Festive State */
-        .merry {
-            color: #00ff00 !important;
-            text-shadow: 
-                0 0 30px #fff,
-                0 0 50px #00ff00,
-                5px 5px 0 #ff0000 !important;
-            font-size: clamp(36px, 11vw, 68px) !important;
-            animation: merryPulse 0.7s infinite, rainbow 3s linear infinite !important;
-            letter-spacing: 5px;
+        #lock-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #lock-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--light);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        #lock-btn:active {
+            transform: scale(0.9);
+        }
+
+        #lock-btn.active {
+            background: linear-gradient(135deg, var(--purple), var(--dark));
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 20px rgba(6, 255, 165, 0.5);
+        }
+
+        #lock-btn.active svg {
+            stroke: var(--accent);
+        }
+
+        #lock-text {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--light);
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Welcome Screen */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, var(--purple) 100%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 30px;
+            box-sizing: border-box;
+            text-align: center;
+            overflow-y: auto;
+        }
+
+        .screen h1 { 
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        @keyframes merryPulse {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            50% { transform: scale(1.2) rotate(5deg); }
+        .screen .tagline {
+            font-size: 14px;
+            color: var(--accent);
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
         }
 
-        @keyframes rainbow {
-            0% { filter: hue-rotate(0deg) saturate(150%); }
-            100% { filter: hue-rotate(360deg) saturate(150%); }
+        /* Single Step Display */
+        .step-display {
+            max-width: 400px;
+            margin-bottom: 30px;
         }
 
-        /* Chaos Background */
-        body.chaos-active {
-            background: radial-gradient(circle at 50% 50%, #2a0000, #050000);
-            animation: bgPulse 0.3s infinite;
+        .current-step {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            animation: slideIn 0.5s ease;
         }
 
-        @keyframes bgPulse {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .glitch-flash { 
-            animation: flash 0.08s infinite; 
-        }
-        
-        @keyframes flash {
-            0% { background: rgba(255,0,0,0.6); }
-            33% { background: rgba(0,255,255,0.6); }
-            66% { background: rgba(255,255,0,0.6); }
-            100% { background: rgba(255,0,0,0.6); }
+        .step-number-large {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            text-align: center;
+            line-height: 48px;
+            font-weight: 700;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
+            margin-bottom: 20px;
         }
 
-        /* Death mode */
-        .dead-mode {
-            background: #000 !important;
-            animation: none !important;
+        .step-title-large {
+            font-weight: 700;
+            font-size: 24px;
+            color: var(--light);
+            margin-bottom: 12px;
         }
+
+        .step-desc-large {
+            font-size: 15px;
+            color: rgba(241, 250, 238, 0.8);
+            line-height: 1.8;
+        }
+
+        /* Progress Indicator */
+        .progress-dots {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            width: 32px;
+            border-radius: 6px;
+        }
+
+        .primary-btn {
+            padding: 18px 48px;
+            font-size: 18px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            box-shadow: 0 8px 24px rgba(105, 48, 195, 0.5);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .primary-btn svg {
+            stroke: currentColor;
+        }
+
+        .primary-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Upload Screen Specific */
+        #upload-area {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+        }
+
+        #upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(29, 53, 87, 0.95);
+        }
+
+        #upload-area .upload-icon {
+            margin-bottom: 20px;
+        }
+
+        #upload-area .upload-icon svg {
+            stroke: var(--accent);
+        }
+
+        #upload-area .upload-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        #upload-area .upload-subtext {
+            font-size: 14px;
+            color: rgba(241, 250, 238, 0.6);
+            margin-top: 8px;
+        }
+
+        .hidden { 
+            display: none !important; 
+        }
+
+        /* Hidden file input */
+        #file-input { 
+            display: none; 
+        }
+
+
+
     </style>
 </head>
 <body>
 
-<div id="overlay">
-    <h1>RING<br>THE<br>BELL</h1>
-    <p>🔔 TAP TO RELEASE CHAOS 🔥</p>
-</div>
+    <!-- Step 1: Welcome Screen -->
+    <div id="welcome-screen" class="screen">
+        <h1>AssistArt</h1>
+        <p class="tagline">AR Drawing Assistant</p>
+        
+        <div class="progress-dots">
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+        </div>
 
-<div id="ui-layer">
-    <div id="santa-msg">READY?</div>
-    <div id="warning">REALITY BREAKING</div>
-</div>
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">1</div>
+                <div class="step-title-large">Setup Your Phone</div>
+                <div class="step-desc-large">Secure your device on a stand or holder, facing downward toward your drawing surface</div>
+            </div>
+        </div>
+        
+        <button class="primary-btn" onclick="goToStep2()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            Enable Camera
+        </button>
+    </div>
 
-<script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-</script>
+    <!-- Step 2: Camera Permission -->
+    <div id="camera-screen" class="screen hidden">
+        <h1>AssistArt</h1>
+        <p class="tagline">AR Drawing Assistant</p>
+        
+        <div class="progress-dots">
+            <div class="progress-dot"></div>
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+        </div>
 
-<script type="module">
-    import * as THREE from 'three';
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">2</div>
+                <div class="step-title-large">Camera Access</div>
+                <div class="step-desc-large">We need your camera permission to overlay the reference image on your drawing surface</div>
+            </div>
+        </div>
+        
+        <button class="primary-btn" onclick="enableCamera()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Allow Camera
+        </button>
+    </div>
 
-    let scene, camera, renderer, bell, particles, analyzer, dataArray, audioCtx;
-    let chaosLevel = 0;
-    let isDead = false;
+    <!-- Step 3: Upload Image -->
+    <div id="upload-screen" class="screen hidden">
+        <h1>AssistArt</h1>
+        <p class="tagline">AR Drawing Assistant</p>
+        
+        <div class="progress-dots">
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+        </div>
 
-    const phrases = [
-        "TAP IT!", "GO!", "LOUDER!", "BREAK IT!", "SANTA'S MAD", 
-        "ELF REVOLT", "THE REINDEER SCREAM", "BELL CRACKING", 
-        "GLITCHING...", "CRITICAL FAILURE", "STOP!", "TOO LATE", 
-        "VOID STATUS: FESTIVE", "SANTA TERMINATED", "MERRY CHRISTMAS!"
-    ];
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">3</div>
+                <div class="step-title-large">Upload Reference</div>
+                <div class="step-desc-large">Choose the image you want to trace from your gallery</div>
+            </div>
+        </div>
 
-    function init() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 5;
+        <div id="upload-area" onclick="document.getElementById('file-input').click()">
+            <div class="upload-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+            </div>
+            <div class="upload-text">Tap to Upload Image</div>
+            <div class="upload-subtext">JPG, PNG, or any image format</div>
+        </div>
+        
+        <input type="file" id="file-input" accept="image/*">
+    </div>
 
-        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
 
-        // Bell Geometry
-        const geo = new THREE.CylinderGeometry(0.6, 1.8, 2.5, 32);
-        const mat = new THREE.MeshPhongMaterial({ 
-            color: 0xffd700, 
-            shininess: 100, 
-            emissive: 0x440000,
-            emissiveIntensity: 0.5
+
+
+
+
+
+
+
+
+
+
+    <!-- Step 4: AR View -->
+    <div id="app-container" class="hidden">
+        <video id="camera-feed" autoplay playsinline></video>
+        
+        <img id="reference-image" src="" alt="Reference" class="hidden">
+
+        <!-- Upload Button - Top Right -->
+        <div id="upload-button-container">
+            <button id="upload-btn" onclick="document.getElementById('file-input-2').click()" title="Change Image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Opacity Slider - Left Side -->
+        <div id="opacity-slider-container">
+            <div class="slider-label">Opacity</div>
+            <div class="vertical-slider-wrapper">
+                <input type="range" id="opacity-slider" class="vertical" min="0" max="1" step="0.01" value="0.5" orient="vertical">
+            </div>
+        </div>
+
+        <!-- Lock Button - Right Side -->
+        <div id="lock-button-container">
+            <button id="lock-btn" onclick="toggleLock()">
+                <svg id="lock-icon-unlocked" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+                <svg id="lock-icon-locked" viewBox="0 0 24 24" style="display: none;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </button>
+            <div id="lock-text">Lock</div>
+        </div>
+        
+        <input type="file" id="file-input-2" accept="image/*" style="display: none;">
+    </div>
+
+    <!-- Step 4 Instructions Overlay -->
+    <div id="final-instruction" class="screen hidden">
+        <div class="progress-dots">
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot active"></div>
+        </div>
+
+        <div class="step-display">
+            <div class="current-step">
+                <div class="step-number-large">4</div>
+                <div class="step-title-large">Align & Trace</div>
+                <div class="step-desc-large">
+                    • Drag the image to position it<br>
+                    • Pinch with 2 fingers to zoom in/out<br>
+                    • Use left slider to adjust opacity<br>
+                    • Tap lock button when ready<br>
+                    • Start tracing your masterpiece!
+                </div>
+            </div>
+        </div>
+
+        <button class="primary-btn" onclick="startTracing()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            Start Creating
+        </button>
+    </div>
+
+    <script>
+        /* --- JavaScript Logic --- */
+
+        const video = document.getElementById('camera-feed');
+        const refImage = document.getElementById('reference-image');
+        const fileInput = document.getElementById('file-input');
+        const fileInput2 = document.getElementById('file-input-2');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityContainer = document.getElementById('opacity-slider-container');
+        const lockBtn = document.getElementById('lock-btn');
+        const lockText = document.getElementById('lock-text');
+        const lockIconUnlocked = document.getElementById('lock-icon-unlocked');
+        const lockIconLocked = document.getElementById('lock-icon-locked');
+
+        let isLocked = false;
+        let currentScale = 1;
+        let posX = 0, posY = 0;
+
+        // Touch State for dragging
+        let isDragging = false;
+        let dragStartX, dragStartY, initialLeft, initialTop;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Pinch Zoom State
+        let initialPinchDistance = 0;
+        let initialScale = 1;
+
+        // Step Navigation
+        function goToStep2() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('camera-screen').classList.remove('hidden');
+        }
+
+        async function enableCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: { exact: "environment" } } 
+                }).catch(() => {
+                    return navigator.mediaDevices.getUserMedia({ video: true });
+                });
+                
+                video.srcObject = stream;
+                document.getElementById('camera-screen').classList.add('hidden');
+                document.getElementById('upload-screen').classList.remove('hidden');
+            } catch (err) {
+                alert("Camera access denied. Please allow camera permissions and try again.");
+                console.error(err);
+            }
+        }
+
+        // Handle Image Upload
+        function handleImageUpload(file) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    refImage.src = e.target.result;
+                    refImage.classList.remove('hidden');
+                    posX = 0; posY = 0;
+                    currentScale = 1;
+                    updateTransform();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+                document.getElementById('upload-screen').classList.add('hidden');
+                document.getElementById('final-instruction').classList.remove('hidden');
+            }
         });
-        bell = new THREE.Mesh(geo, mat);
-        scene.add(bell);
 
-        // Lights
-        const pLight = new THREE.PointLight(0xff0000, 70, 25);
-        pLight.position.set(2, 3, 2);
-        scene.add(pLight);
-        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        fileInput2.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            handleImageUpload(file);
+        });
 
-        // Particles for Chaos
-        const pGeo = new THREE.BufferGeometry();
-        const pCount = 3000;
-        const posArr = new Float32Array(pCount * 3);
-        for(let i=0; i<pCount*3; i++) {
-            posArr[i] = (Math.random()-0.5)*25;
+        function startTracing() {
+            document.getElementById('final-instruction').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
         }
-        pGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-        particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
-            color: 0xffffff, 
-            size: 0.05,
-            transparent: true,
-            opacity: 0.6
-        }));
-        scene.add(particles);
 
-        window.addEventListener('touchstart', (e) => { e.preventDefault(); ring(); }, {passive:false});
-        window.addEventListener('click', ring);
-        window.addEventListener('resize', onResize);
-    }
+        // Opacity Control
+        opacitySlider.addEventListener('input', (e) => {
+            refImage.style.opacity = e.target.value;
+        });
 
-    async function initAudio() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
-        if (stream) {
-            const source = audioCtx.createMediaStreamSource(stream);
-            analyzer = audioCtx.createAnalyser();
-            source.connect(analyzer);
-            dataArray = new Uint8Array(analyzer.frequencyBinCount);
-        }
-        loopBeat();
-    }
-
-    function loopBeat() {
-        if(isDead) return;
-        
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        
-        osc.type = chaosLevel > 60 ? 'sawtooth' : chaosLevel > 30 ? 'square' : 'sine';
-        osc.frequency.setValueAtTime(35 + (chaosLevel * 1.5), audioCtx.currentTime);
-        
-        // Much louder volume - scales up with chaos
-        const volume = Math.min(0.8, 0.5 + (chaosLevel * 0.005));
-        g.gain.setValueAtTime(volume, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-        
-        osc.connect(g).connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.15);
-        
-        const tempo = Math.max(50, 450 - (chaosLevel * 4));
-        setTimeout(loopBeat, tempo);
-    }
-
-    function ring() {
-        if(isDead) return;
-        chaosLevel++;
-        
-        // Haptic Feedback - Vibrate Mobile!
-        if (navigator.vibrate) {
-            if(chaosLevel > 90) {
-                // Extreme chaos vibration pattern
-                navigator.vibrate([50, 30, 50, 30, 100]);
-            } else if(chaosLevel > 60) {
-                // Heavy vibration
-                navigator.vibrate([100, 50, 100]);
-            } else if(chaosLevel > 30) {
-                // Medium vibration
-                navigator.vibrate([50, 30, 50]);
+        // Lock Toggle
+        function toggleLock() {
+            isLocked = !isLocked;
+            if (isLocked) {
+                lockBtn.classList.add('active');
+                lockIconUnlocked.style.display = 'none';
+                lockIconLocked.style.display = 'block';
+                lockText.innerText = "Locked";
+                opacityContainer.classList.add('hidden');
+                document.getElementById('upload-button-container').style.display = 'none';
+                refImage.style.pointerEvents = "none";
             } else {
-                // Light tap
-                navigator.vibrate(30);
+                lockBtn.classList.remove('active');
+                lockIconUnlocked.style.display = 'block';
+                lockIconLocked.style.display = 'none';
+                lockText.innerText = "Lock";
+                opacityContainer.classList.remove('hidden');
+                document.getElementById('upload-button-container').style.display = 'block';
+                refImage.style.pointerEvents = "auto";
             }
         }
-        
-        // Activate chaos mode
-        if(chaosLevel > 15) {
-            document.body.classList.add('chaos-active');
-        }
-        
-        // Camera kick
-        camera.position.z += 0.4;
 
-        // Geometry Shredding
-        const pos = bell.geometry.attributes.position;
-        for(let i=0; i<pos.count; i++) {
-            pos.setXYZ(i, 
-                pos.getX(i) + (Math.random()-0.5) * (chaosLevel * 0.035),
-                pos.getY(i) + (Math.random()-0.5) * (chaosLevel * 0.035),
-                pos.getZ(i) + (Math.random()-0.5) * (chaosLevel * 0.035)
-            );
+        // Get distance between two touch points
+        function getDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
         }
-        pos.needsUpdate = true;
 
-        const msg = document.getElementById('santa-msg');
-        
-        // Final Victory
-        if(chaosLevel >= 120) {
-            isDead = true;
+        // Touch Events for Drag and Pinch Zoom
+        refImage.addEventListener('touchstart', (e) => {
+            if (isLocked) return;
             
-            // Victory vibration celebration!
-            if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200, 100, 200, 100, 400]);
+            if (e.touches.length === 1) {
+                // Single touch - start dragging
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                initialLeft = posX;
+                initialTop = posY;
+            } else if (e.touches.length === 2) {
+                // Two touches - start pinch zoom
+                isDragging = false;
+                initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+                initialScale = currentScale;
             }
+        });
+
+        refImage.addEventListener('touchmove', (e) => {
+            if (isLocked) return;
+            e.preventDefault();
             
-            msg.innerText = "MERRY CHRISTMAS!";
-            msg.classList.add('merry');
-            document.body.classList.remove('chaos-active');
-            document.body.classList.add('dead-mode');
-            document.body.style.background = "radial-gradient(circle, #003300, #000)";
-            document.getElementById('warning').style.opacity = 0;
-            document.getElementById('ui-layer').classList.remove('heavy-shake');
-            return;
+            if (e.touches.length === 1 && isDragging) {
+                // Single touch - drag
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                
+                const deltaX = currentX - dragStartX;
+                const deltaY = currentY - dragStartY;
+
+                posX = initialLeft + deltaX;
+                posY = initialTop + deltaY;
+
+                updateTransform();
+            } else if (e.touches.length === 2) {
+                // Two touches - pinch zoom
+                const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                const scaleChange = currentDistance / initialPinchDistance;
+                currentScale = Math.max(0.1, Math.min(5, initialScale * scaleChange));
+                
+                updateTransform();
+            }
+        });
+
+        refImage.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                isDragging = false;
+            } else if (e.touches.length === 1) {
+                // One finger left, restart dragging
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                initialLeft = posX;
+                initialTop = posY;
+            }
+        });
+
+        function updateTransform() {
+            refImage.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
         }
-
-        // Extreme chaos at high levels
-        if(chaosLevel > 90) {
-            document.body.classList.add('glitch-flash');
-        }
-
-        // Update message
-        const msgIndex = Math.floor(chaosLevel / 8);
-        msg.innerText = phrases[msgIndex] || "GOD HAS LEFT";
-        
-        // Funky scaling and rotation
-        const scaleVal = Math.min(1.4, 1 + (chaosLevel * 0.007));
-        const rotateVal = (Math.random()-0.5) * (8 + chaosLevel * 0.4);
-        msg.style.transform = `scale(${scaleVal}) rotate(${rotateVal}deg)`;
-        
-        // Warning activation
-        if(chaosLevel > 35) {
-            document.getElementById('ui-layer').classList.add('heavy-shake');
-            document.getElementById('warning').style.opacity = 1;
-        }
-
-        spawnEmoji();
-    }
-
-    function spawnEmoji() {
-        const emojis = ['🔔', '🎅', '🔥', '💀', '❄️', '🧨', '🎁', '✨', '⚡', '💥'];
-        const e = document.createElement('div');
-        e.className = 'popup';
-        e.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-        e.style.left = '50%';
-        e.style.top = '50%';
-        e.style.setProperty('--x', `${(Math.random()-0.5)*200}vw`);
-        e.style.setProperty('--y', `${(Math.random()-0.5)*200}vh`);
-        document.body.appendChild(e);
-        setTimeout(() => e.remove(), 600);
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        let vol = 0;
-        if(analyzer) {
-            analyzer.getByteFrequencyData(dataArray);
-            vol = dataArray.reduce((a,b)=>a+b) / dataArray.length;
-            if(vol > 55) ring();
-        }
-
-        const intensity = (chaosLevel * 0.05) + (vol * 0.12);
-        
-        // Camera effects
-        camera.position.x = (Math.random()-0.5) * intensity * 0.15;
-        camera.position.y = (Math.random()-0.5) * intensity * 0.15;
-        camera.position.z = THREE.MathUtils.lerp(camera.position.z, 5, 0.12);
-        camera.lookAt(0, 0, 0);
-
-        // Bell rotation and scaling
-        bell.rotation.y += 0.04 + intensity * 0.12;
-        bell.rotation.x += intensity * 0.02;
-        const pulse = 1 + Math.sin(Date.now() * 0.008) * intensity * 0.15;
-        bell.scale.setScalar(pulse);
-
-        // Particle chaos
-        if(particles) {
-            particles.rotation.y += 0.002 + intensity * 0.01;
-            particles.rotation.x += intensity * 0.005;
-        }
-
-        // Visual distortion
-        if(!isDead) {
-            const shift = intensity * 6;
-            const hue = chaosLevel * 4;
-            const contrast = 100 + chaosLevel * 1.5;
-            renderer.domElement.style.filter = `
-                hue-rotate(${hue}deg) 
-                contrast(${contrast}%)
-                drop-shadow(${shift}px 0 #f00) 
-                drop-shadow(${-shift}px 0 #0ff)
-            `;
-        } else {
-            renderer.domElement.style.filter = 'none';
-        }
-        
-        renderer.render(scene, camera);
-    }
-
-    function onResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    document.getElementById('overlay').addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        document.getElementById('overlay').style.display = 'none';
-        init();
-        initAudio().catch(()=>{});
-        animate();
-    });
-
-    document.getElementById('overlay').addEventListener('click', () => {
-        document.getElementById('overlay').style.display = 'none';
-        init();
-        initAudio().catch(()=>{});
-        animate();
-    });
-</script>
+    </script>
 </body>
 </html>
