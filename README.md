@@ -2,10 +2,7 @@
 
 AssistArt is a mobile-first, web-based **AR Drawing Assistant** that helps artists trace reference images by overlaying them onto a real-world drawing surface using the device camera.
 
-
-<img width="1408" height="736" alt="Gemini_Generated_Image_6o4qtp6o4qtp6o4q" src="https://github.com/user-attachments/assets/1f726b19-a22a-4fcd-9298-58d48690a396" />
-
-
+<img width="1177" height="585" alt="Gemini_Generated_Image_6o4qtp6o4qtp6o4q" src="https://github.com/user-attachments/assets/cbf08f61-34a9-4de4-9670-c9899a3c712b" />
 
 ---
 
